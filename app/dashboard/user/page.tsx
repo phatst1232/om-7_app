@@ -1,9 +1,7 @@
 "use client";
 
-import TableAdminUser from "@/shared/components/table/admin-table--user";
 import CustomAdminUserTable from "@/shared/components/table/custom-admin-user-table";
-import TestTable1 from "@/shared/components/table/test-editable-table";
-import { Layout, theme } from "antd";
+import { theme } from "antd";
 import React from "react";
 
 export default function DashboardHome() {
