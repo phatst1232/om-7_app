@@ -1,18 +1,22 @@
-"use client"
-import React from 'react';
-import { SlidersOutlined, UserOutlined, RollbackOutlined } from '@ant-design/icons';
-import type { MenuProps } from 'antd';
-import { Menu, theme } from 'antd';
-import { useRouter } from 'next/navigation'
-import { LOGIN_PATH, USER_TABLE_PATH } from '@/shared/common/app-route';
-type MenuItem = Required<MenuProps>['items'][number];
+"use client";
+import React from "react";
+import {
+  SlidersOutlined,
+  UserOutlined,
+  RollbackOutlined,
+} from "@ant-design/icons";
+import type { MenuProps } from "antd";
+import { Menu, theme } from "antd";
+import { useRouter } from "next/navigation";
+import { LOGIN_PATH, USER_TABLE_PATH } from "@/shared/common/app-route";
+type MenuItem = Required<MenuProps>["items"][number];
 
 function getItem(
   label: React.ReactNode,
   key: React.Key,
   icon?: React.ReactNode,
   children?: MenuItem[],
-  type?: 'group',
+  type?: "group"
 ): MenuItem {
   return {
     key,
@@ -29,7 +33,11 @@ const items: MenuProps["items"] = [
       "User Management",
       "g1",
       null,
-      [getItem("User Table", "1"), getItem("Update", "2"), getItem("Activate Job", "3")],
+      [
+        getItem("User Table", "1"),
+        getItem("Update", "2"),
+        getItem("Activate Job", "3"),
+      ],
       "group"
     ),
     getItem(
@@ -63,29 +71,29 @@ const items: MenuProps["items"] = [
 ];
 
 const SideBarMenu: React.FC = () => {
-  const router = useRouter()
+  const router = useRouter();
 
-  const onClick: MenuProps['onClick'] = (e) => {
-    console.log('click ', e);
+  const onClick: MenuProps["onClick"] = (e) => {
+    console.log("click ", e);
     switch (e.key) {
-      case '1':
-        router.push(USER_TABLE_PATH)
+      case "1":
+        router.push(USER_TABLE_PATH);
         break;
-      case '7': 
-        localStorage.removeItem('token');
+      case "7":
+        localStorage.removeItem("token");
         router.push(LOGIN_PATH);
         break;
     }
   };
-    const {
-      token: { colorBgContainer },
-    } = theme.useToken();
+  const {
+    token: { colorBgContainer },
+  } = theme.useToken();
   return (
     <Menu
       onClick={onClick}
-      theme='dark'
-      style={{ animation: 'backwards', backgroundColor: '#202540' }}
-      defaultSelectedKeys={['1']}
+      theme="dark"
+      style={{ animation: "backwards", backgroundColor: "#202540" }}
+      defaultSelectedKeys={["1"]}
       // defaultOpenKeys={['sub1']}
       mode="inline"
       items={items}

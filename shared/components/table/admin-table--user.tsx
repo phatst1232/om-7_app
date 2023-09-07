@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Form, Input, InputNumber, Popconfirm, Table, Typography } from 'antd';
+import React, { useState } from "react";
+import { Form, Input, InputNumber, Popconfirm, Table, Typography } from "antd";
 
 interface UserData {
   id: string;
@@ -16,8 +16,8 @@ interface UserData {
 
 function getCurrentFormattedDate(): string {
   const currentDate = new Date();
-  const day = currentDate.getDate().toString().padStart(2, '0');
-  const month = (currentDate.getMonth() + 1).toString().padStart(2, '0'); // Month is zero-based
+  const day = currentDate.getDate().toString().padStart(2, "0");
+  const month = (currentDate.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
   const year = currentDate.getFullYear();
 
   return `${day}-${month}-${year}`;
@@ -26,23 +26,23 @@ function getCurrentFormattedDate(): string {
 const originData: UserData[] = [];
 for (let i = 0; i < 100; i++) {
   originData.push({
-    id: i.toString(), 
+    id: i.toString(),
     fullName: `Edward ${i}`,
     username: `Username ${i}`,
     phone: `0921241233${i}`,
-    gender: (Date.now()%2 === 0) ? true : false ,
+    gender: Date.now() % 2 === 0 ? true : false,
     // image: 'none',
     dateOfBirth: getCurrentFormattedDate(),
     createdAt: getCurrentFormattedDate(),
-    roles: ['admin', 'user'],
-    status: ''
+    roles: ["admin", "user"],
+    status: "",
   });
 }
 interface EditableCellProps extends React.HTMLAttributes<HTMLElement> {
   editing: boolean;
   dataIndex: string;
   title: any;
-  inputType: 'number' | 'text';
+  inputType: "number" | "text";
   record: UserData;
   index: number;
   children: React.ReactNode;
@@ -58,7 +58,7 @@ const EditableCell: React.FC<EditableCellProps> = ({
   children,
   ...restProps
 }) => {
-  const inputNode = inputType === 'number' ? <InputNumber /> : <Input />;
+  const inputNode = inputType === "number" ? <InputNumber /> : <Input />;
 
   return (
     <td {...restProps}>
@@ -87,7 +87,7 @@ const TableAdminUser: React.FC = () => {
   const [data, setData] = useState(originData);
   const [editingKey, setEditingKey] = useState("");
 
-  const [dataSource, setDataSource] = useState<UserData[]>(originData)
+  const [dataSource, setDataSource] = useState<UserData[]>(originData);
 
   const isEditing = (record: UserData) => record.id === editingKey;
 
@@ -220,7 +220,7 @@ const TableAdminUser: React.FC = () => {
   const handleAdd = () => {
     const newData: UserData = {
       id: `${count}`,
-      status: 'active'
+      status: "active",
     };
     setDataSource([...dataSource, newData]);
     setCount(count + 1);
@@ -245,23 +245,22 @@ const TableAdminUser: React.FC = () => {
   return (
     <div>
       <Form form={form} component={false}>
-      <Table
-        components={{
-          body: {
-            cell: EditableCell,
-          },
-        }}
-        bordered
-        dataSource={data}
-        columns={mergedColumns}
-        rowClassName="editable-row"
-        pagination={{
-          onChange: cancel,
-        }}
-      />
-    </Form>
+        <Table
+          components={{
+            body: {
+              cell: EditableCell,
+            },
+          }}
+          bordered
+          dataSource={data}
+          columns={mergedColumns}
+          rowClassName="editable-row"
+          pagination={{
+            onChange: cancel,
+          }}
+        />
+      </Form>
     </div>
-    
   );
 };
 

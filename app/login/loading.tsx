@@ -5,7 +5,7 @@ const Loading = () => {
         <h2 className="text-2x1">Loading...</h2>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default Loading
+export default Loading;

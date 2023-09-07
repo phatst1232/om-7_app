@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { Layout } from 'antd'
+import { Layout } from "antd";
 
 const { Content, Footer } = Layout;
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <Layout

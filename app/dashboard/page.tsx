@@ -1,28 +1,28 @@
-"use client"
+"use client";
 
-import { Layout, theme } from 'antd'
-import Image from 'next/image'
-import React from 'react';
+import TableAdminUser from "@/shared/components/table/admin-table--user";
+import CustomAdminUserTable from "@/shared/components/table/custom-admin-user-table";
+import FullTableTest from "@/shared/components/table/test-full-table";
+import FullTableTestt from "@/shared/components/table/test-full-table";
+import { Layout, theme } from "antd";
+import Image from "next/image";
+import React from "react";
 
 const { Header, Content, Sider, Footer } = Layout;
-
 
 export default function DashboardHome() {
   const {
     token: { colorBgContainer },
   } = theme.useToken();
   return (
-    <div style={{ padding: 24, textAlign: 'center', background: colorBgContainer }}>
-      <p>long content</p>
-      {
-        // indicates very long content
-        Array.from({ length: 100 }, (_, index) => (
-          <React.Fragment key={index}>
-            {index % 20 === 0 && index ? 'more' : '...'}
-            <br />
-          </React.Fragment>
-        ))
-      }
+    <div
+      className="w_content"
+      style={{ padding: 24, background: colorBgContainer }}
+    >
+      {/* <h1 className='table-title'>Custom Admin User table</h1> */}
+      <CustomAdminUserTable />
+      <FullTableTest />
+      <TableAdminUser />
     </div>
-  )
+  );
 }

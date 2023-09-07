@@ -1,42 +1,40 @@
-'user client'
+"user client";
 
-import React, { useState } from 'react';
-import { LockOutlined, UserOutlined } from '@ant-design/icons';
-import { Button, Checkbox, Form, Image, Input } from 'antd';
-import { useRouter } from 'next/navigation';
-import { DASHBOARD_PATH } from '@/shared/common/app-route';
-import { getToken } from '@/lib/action/auth-action';
-import { toast } from 'react-toastify';
-import ggicon from '../../icon/google.png'
-import { GoogleOutlined } from '@ant-design/icons';
+import React, { useState } from "react";
+import { LockOutlined, UserOutlined } from "@ant-design/icons";
+import { Button, Checkbox, Form, Image, Input } from "antd";
+import { useRouter } from "next/navigation";
+import { DASHBOARD_PATH } from "@/shared/common/app-route";
+import { getToken } from "@/lib/action/auth-action";
+import { GoogleOutlined } from "@ant-design/icons";
 
 const LoginForm: React.FC = () => {
-  const router = useRouter()
+  const router = useRouter();
   const [form] = Form.useForm();
-  const [ isCorrectPassword, setIsCorrectPassword ] = useState(true);
-  const [ isValidUsername, setIsValidUsername ] = useState(true);
-  
+  const [isCorrectPassword, setIsCorrectPassword] = useState(true);
+  const [isValidUsername, setIsValidUsername] = useState(true);
+
   const onFinish = async (values: any) => {
-    console.log('Received values of form: ', values);
+    console.log("Received values of form: ", values);
     const dataRes = await getToken(values.username, values.password);
     if (dataRes?.access_token) {
-      router.push(DASHBOARD_PATH)
-      localStorage.setItem('token', dataRes.access_token);
-      toast.warning('Welcome to Dashboard!', {
-        position: "top-right",
-        autoClose: 5000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "light",
-      });
+      router.push(DASHBOARD_PATH);
+      localStorage.setItem("token", dataRes.access_token);
+      // toast.warning('Welcome to Dashboard!', {
+      //   position: "top-right",
+      //   autoClose: 5000,
+      //   hideProgressBar: false,
+      //   closeOnClick: true,
+      //   pauseOnHover: true,
+      //   draggable: true,
+      //   progress: undefined,
+      //   theme: "light",
+      // });
     } else {
-      if (dataRes?.message === 'Invalid password') {
+      if (dataRes?.message === "Invalid password") {
         setIsCorrectPassword(false);
       }
-      if (dataRes?.message === 'User not found') {
+      if (dataRes?.message === "User not found") {
         setIsValidUsername(false);
       }
       form.validateFields();
@@ -45,14 +43,14 @@ const LoginForm: React.FC = () => {
 
   const onPwChange = () => {
     setIsCorrectPassword(true);
-  }
+  };
   const onUsernameChange = () => {
     setIsValidUsername(true);
-  }
+  };
 
   const handleLoginGoogle = () => {
     //not yet
-  }
+  };
 
   return (
     <Form
@@ -120,8 +118,12 @@ const LoginForm: React.FC = () => {
           // htmlType="submit"
           onClick={handleLoginGoogle}
           block
-          icon={<GoogleOutlined/>}
-          style={{ marginTop: 5, backgroundColor: '#cf4332', textAlign: 'center' }}
+          icon={<GoogleOutlined />}
+          style={{
+            marginTop: 5,
+            backgroundColor: "#cf4332",
+            textAlign: "center",
+          }}
         >
           Log in Google
         </Button>
