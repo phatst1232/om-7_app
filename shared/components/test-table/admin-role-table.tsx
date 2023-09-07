@@ -17,7 +17,7 @@ import { ColumnsType, TableProps } from 'antd/es/table';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-function CustomAdminUserTable() {
+function AdminRoleTable() {
   const [searchData, setSearchData] = useState('');
   // const [columns, setColumns] = useState<ColumnConfig[]>([]);
   const [dataSource, setDataSource] = useState<User[]>([]);
@@ -308,4 +308,4 @@ function CustomAdminUserTable() {
   );
 }
 
-export default CustomAdminUserTable;
+export default AdminRoleTable;

@@ -1,12 +1,12 @@
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError } from 'axios';
 import {
   GET_ALL_USER_ROUTE,
   UPDATE_USER_STATUS_ROUTE,
-} from "@/shared/common/api-route";
-import { UserData } from "../dto/dashboard-dtos";
+} from '@/shared/common/api-route';
+import { User } from '../dto/dashboard-dtos';
 
 const commonHeaders = {
-  "Content-Type": "application/json",
+  'Content-Type': 'application/json',
 };
 
 function getAuthorizationHeader(token: string) {
@@ -22,7 +22,7 @@ export async function getAllUser(token: string) {
     const response = await axios.get(GET_ALL_USER_ROUTE, { headers });
     return response.data;
   } catch (error) {
-    console.log("Catched error: " + error);
+    console.log('Catched error: ' + error);
     if (error instanceof AxiosError) {
       return error.response?.data;
     }
@@ -32,7 +32,7 @@ export async function getAllUser(token: string) {
 export async function getSearchUser(
   token: string,
   searchData: string
-): Promise<UserData[]> {
+): Promise<User[]> {
   try {
     const headers = getAuthorizationHeader(token);
     const response = await axios.post(
@@ -40,11 +40,11 @@ export async function getSearchUser(
       { searchData },
       { headers }
     );
-    console.log("Res:  ", response.data.data);
-    const users: UserData[] = response.data;
+    console.log('Res:  ', response.data.data);
+    const users: User[] = response.data;
     return users;
   } catch (error) {
-    console.log("Catched error: " + error);
+    console.log('Catched error: ' + error);
     if (error instanceof AxiosError) {
       return [];
     }
@@ -53,9 +53,9 @@ export async function getSearchUser(
 }
 
 export async function updateUserStatus(
-  user: UserData,
+  user: User,
   token: string
-): Promise<UserData> {
+): Promise<User> {
   try {
     const headers = getAuthorizationHeader(token);
     const id = user.id;
@@ -64,13 +64,13 @@ export async function updateUserStatus(
       { status: user.status },
       { headers }
     );
-    console.log("Res:  ", response.data.data);
-    const res: UserData = response.data;
+    console.log('Res:  ', response.data.data);
+    const res: User = response.data;
     return res;
   } catch (error) {
     if (error instanceof AxiosError) {
       if (error.response?.status === 404) {
-        throw new Error("User not found");
+        throw new Error('User not found');
       }
       if (error.response?.status === 201) {
         return error.response.data;

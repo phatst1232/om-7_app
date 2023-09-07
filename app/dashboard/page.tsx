@@ -1,14 +1,10 @@
-"use client";
+'use client';
 
-import TableAdminUser from "@/shared/components/table/admin-table--user";
-import CustomAdminUserTable from "@/shared/components/table/custom-admin-user-table";
-import FullTableTest from "@/shared/components/table/test-full-table";
-import FullTableTestt from "@/shared/components/table/test-full-table";
-import { Layout, theme } from "antd";
-import Image from "next/image";
-import React from "react";
-
-const { Header, Content, Sider, Footer } = Layout;
+import TableAdminUser from '@/shared/components/test-table/admin-table--user';
+import CustomAdminUserTable from '@/shared/components/table/custom-admin-user-table';
+import { theme } from 'antd';
+import React from 'react';
+import FullTableTest from '@/shared/components/test-table/test-full-table';
 
 export default function DashboardHome() {
   const {
@@ -16,7 +12,7 @@ export default function DashboardHome() {
   } = theme.useToken();
   return (
     <div
-      className="w_content"
+      className='w_content'
       style={{ padding: 24, background: colorBgContainer }}
     >
       {/* <h1 className='table-title'>Custom Admin User table</h1> */}

@@ -3,13 +3,13 @@ import {
   LOGIN_ROUTE,
   LOGOUT_ROUTE,
   DOMAIN,
-} from "../../../shared/common/api-route";
+} from '../../../shared/common/api-route';
 
 export async function LoginUserAPI(email: string, password: string) {
   const response = await fetch(DOMAIN + LOGIN_ROUTE, {
-    method: "POST",
+    method: 'POST',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       email: email,
@@ -19,7 +19,7 @@ export async function LoginUserAPI(email: string, password: string) {
 
   if (!response.ok) {
     alert(JSON.parse(await response.text()).message.toUpperCase());
-    return "";
+    return '';
   } else {
     return JSON.parse(await response.text()).accessToken;
   }

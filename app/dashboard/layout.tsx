@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { Layout, Menu, MenuProps, theme } from "antd";
-import SideBarMenu from "@/shared/components/sider/sidebar";
-import StyledComponentsRegistry from "@/lib/AntdRegistry";
+import { useEffect, useState } from 'react';
+import { Layout, Menu, MenuProps, theme } from 'antd';
+import SideBarMenu from '@/shared/components/sider/sidebar';
+import StyledComponentsRegistry from '@/lib/AntdRegistry';
 
 const { Header, Content, Sider, Footer } = Layout;
 
@@ -21,25 +21,25 @@ export default function DashboardLayout({
     <Layout hasSider>
       <Sider
         style={{
-          overflow: "auto",
-          height: "100vh",
-          position: "fixed",
+          overflow: 'auto',
+          height: '100vh',
+          position: 'fixed',
           left: 0,
           top: 0,
           bottom: 0,
-          animation: "infinite",
-          display: "inline-block",
+          animation: 'infinite',
+          display: 'inline-block',
         }}
         collapsible
         collapsed={collapsed}
-        collapsedWidth="80"
+        collapsedWidth='80'
         onCollapse={(value) => setCollapsed(value)}
       >
         <SideBarMenu></SideBarMenu>
       </Sider>
       <Layout
-        className="site-layout"
-        style={{ minHeight: "100vh", marginLeft: collapsed ? 85 : 190 }}
+        className='site-layout'
+        style={{ minHeight: '100vh', marginLeft: collapsed ? 85 : 190 }}
       >
         {/* <Header
           style={{
@@ -50,10 +50,10 @@ export default function DashboardLayout({
         >
           Header
         </Header> */}
-        <Content style={{ color: "black", margin: "0 16px" }}>
+        <Content style={{ color: 'black', margin: '0 16px' }}>
           <StyledComponentsRegistry>{children}</StyledComponentsRegistry>
         </Content>
-        <Footer style={{ textAlign: "center" }}>
+        <Footer style={{ textAlign: 'center' }}>
           @Copyright CyberLogitec 2023
         </Footer>
       </Layout>

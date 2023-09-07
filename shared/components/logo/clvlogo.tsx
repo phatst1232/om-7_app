@@ -1,5 +1,5 @@
-import Image from "next/image";
-import clvLogo from "../../icon/clv_logo.png";
+import Image from 'next/image';
+import clvLogo from '../../icon/clv_logo.png';
 
 export default function ClvLogo() {
   return (
@@ -7,10 +7,10 @@ export default function ClvLogo() {
       src={clvLogo}
       style={{
         width: 300,
-        height: "auto",
+        height: 'auto',
       }}
       priority={false}
-      alt="CyberLogitec Viet Nam - Logo"
+      alt='CyberLogitec Viet Nam - Logo'
     />
   );
 }

@@ -1,14 +1,14 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 // import './index.css';
-import { DownOutlined } from "@ant-design/icons";
-import type { RadioChangeEvent } from "antd";
-import { Form, Radio, Space, Switch, Table } from "antd";
-import type { SizeType } from "antd/es/config-provider/SizeContext";
-import type { ColumnsType, TableProps } from "antd/es/table";
+import { DownOutlined } from '@ant-design/icons';
+import type { RadioChangeEvent } from 'antd';
+import { Form, Radio, Space, Switch, Table } from 'antd';
+import type { SizeType } from 'antd/es/config-provider/SizeContext';
+import type { ColumnsType, TableProps } from 'antd/es/table';
 import type {
   ExpandableConfig,
   TableRowSelection,
-} from "antd/es/table/interface";
+} from 'antd/es/table/interface';
 
 interface DataType {
   key: number;
@@ -19,45 +19,45 @@ interface DataType {
 }
 
 type TablePaginationPosition =
-  | "topLeft"
-  | "topCenter"
-  | "topRight"
-  | "bottomLeft"
-  | "bottomCenter"
-  | "bottomRight";
+  | 'topLeft'
+  | 'topCenter'
+  | 'topRight'
+  | 'bottomLeft'
+  | 'bottomCenter'
+  | 'bottomRight';
 
 //columns type
 const columns: ColumnsType<DataType> = [
   {
-    title: "Name",
-    dataIndex: "name",
+    title: 'Name',
+    dataIndex: 'name',
   },
   {
-    title: "Age",
-    dataIndex: "age",
+    title: 'Age',
+    dataIndex: 'age',
     sorter: (a, b) => a.age - b.age,
   },
   {
-    title: "Address",
-    dataIndex: "address",
+    title: 'Address',
+    dataIndex: 'address',
     filters: [
       {
-        text: "London",
-        value: "London",
+        text: 'London',
+        value: 'London',
       },
       {
-        text: "New York",
-        value: "New York",
+        text: 'New York',
+        value: 'New York',
       },
     ],
     onFilter: (value, record) => record.address.indexOf(value as string) === 0,
   },
   {
-    title: "Action",
-    key: "action",
+    title: 'Action',
+    key: 'action',
     sorter: true,
     render: () => (
-      <Space size="middle">
+      <Space size='middle'>
         <a>Delete</a>
         <a>
           <Space>
@@ -74,7 +74,7 @@ const data: DataType[] = [];
 for (let i = 1; i <= 100; i++) {
   data.push({
     key: i,
-    name: "John Brown",
+    name: 'John Brown',
     age: Number(`${i}2`),
     address: `New York No. ${i} Lake Park`,
     description: `My name is John Brown, I am ${i}2 years old, living in New York No. ${i} Lake Park.`,
@@ -84,13 +84,13 @@ for (let i = 1; i <= 100; i++) {
 const defaultExpandable = {
   expandedRowRender: (record: DataType) => <p>{record.description}</p>,
 };
-const defaultTitle = () => "Here is title";
-const defaultFooter = () => "Here is footer";
+const defaultTitle = () => 'Here is title';
+const defaultFooter = () => 'Here is footer';
 
 const FullTableTest: React.FC = () => {
   const [bordered, setBordered] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [size, setSize] = useState<SizeType>("large");
+  const [size, setSize] = useState<SizeType>('large');
   const [expandable, setExpandable] = useState<
     ExpandableConfig<DataType> | undefined
   >(defaultExpandable);
@@ -102,8 +102,8 @@ const FullTableTest: React.FC = () => {
   >({});
   const [hasData, setHasData] = useState(true);
   const [tableLayout, setTableLayout] = useState();
-  const [top, setTop] = useState<TablePaginationPosition | "none">("none");
-  const [bottom, setBottom] = useState<TablePaginationPosition>("bottomRight");
+  const [top, setTop] = useState<TablePaginationPosition | 'none'>('none');
+  const [bottom, setBottom] = useState<TablePaginationPosition>('bottomRight');
   const [ellipsis, setEllipsis] = useState(false);
   const [yScroll, setYScroll] = useState(false);
   const [xScroll, setXScroll] = useState<string>();
@@ -165,13 +165,13 @@ const FullTableTest: React.FC = () => {
     scroll.y = 240;
   }
   if (xScroll) {
-    scroll.x = "100vw";
+    scroll.x = '100vw';
   }
 
   const tableColumns = columns.map((item) => ({ ...item, ellipsis }));
-  if (xScroll === "fixed") {
+  if (xScroll === 'fixed') {
     tableColumns[0].fixed = true;
-    tableColumns[tableColumns.length - 1].fixed = "right";
+    tableColumns[tableColumns.length - 1].fixed = 'right';
   }
 
   const tableProps: TableProps<DataType> = {
@@ -190,87 +190,87 @@ const FullTableTest: React.FC = () => {
   return (
     <>
       <Form
-        layout="inline"
-        className="components-table-demo-control-bar"
+        layout='inline'
+        className='components-table-demo-control-bar'
         style={{ marginBottom: 16 }}
       >
-        <Form.Item label="Bordered">
+        <Form.Item label='Bordered'>
           <Switch checked={bordered} onChange={handleBorderChange} />
         </Form.Item>
-        <Form.Item label="loading">
+        <Form.Item label='loading'>
           <Switch checked={loading} onChange={handleLoadingChange} />
         </Form.Item>
-        <Form.Item label="Title">
+        <Form.Item label='Title'>
           <Switch checked={showTitle} onChange={handleTitleChange} />
         </Form.Item>
-        <Form.Item label="Column Header">
+        <Form.Item label='Column Header'>
           <Switch checked={showHeader} onChange={handleHeaderChange} />
         </Form.Item>
-        <Form.Item label="Footer">
+        <Form.Item label='Footer'>
           <Switch checked={showfooter} onChange={handleFooterChange} />
         </Form.Item>
-        <Form.Item label="Expandable">
+        <Form.Item label='Expandable'>
           <Switch checked={!!expandable} onChange={handleExpandChange} />
         </Form.Item>
-        <Form.Item label="Checkbox">
+        <Form.Item label='Checkbox'>
           <Switch
             checked={!!rowSelection}
             onChange={handleRowSelectionChange}
           />
         </Form.Item>
-        <Form.Item label="Fixed Header">
+        <Form.Item label='Fixed Header'>
           <Switch checked={!!yScroll} onChange={handleYScrollChange} />
         </Form.Item>
-        <Form.Item label="Has Data">
+        <Form.Item label='Has Data'>
           <Switch checked={!!hasData} onChange={handleDataChange} />
         </Form.Item>
-        <Form.Item label="Ellipsis">
+        <Form.Item label='Ellipsis'>
           <Switch checked={!!ellipsis} onChange={handleEllipsisChange} />
         </Form.Item>
-        <Form.Item label="Size">
+        <Form.Item label='Size'>
           <Radio.Group value={size} onChange={handleSizeChange}>
-            <Radio.Button value="large">Large</Radio.Button>
-            <Radio.Button value="middle">Middle</Radio.Button>
-            <Radio.Button value="small">Small</Radio.Button>
+            <Radio.Button value='large'>Large</Radio.Button>
+            <Radio.Button value='middle'>Middle</Radio.Button>
+            <Radio.Button value='small'>Small</Radio.Button>
           </Radio.Group>
         </Form.Item>
-        <Form.Item label="Table Scroll">
+        <Form.Item label='Table Scroll'>
           <Radio.Group value={xScroll} onChange={handleXScrollChange}>
             <Radio.Button value={undefined}>Unset</Radio.Button>
-            <Radio.Button value="scroll">Scroll</Radio.Button>
-            <Radio.Button value="fixed">Fixed Columns</Radio.Button>
+            <Radio.Button value='scroll'>Scroll</Radio.Button>
+            <Radio.Button value='fixed'>Fixed Columns</Radio.Button>
           </Radio.Group>
         </Form.Item>
-        <Form.Item label="Table Layout">
+        <Form.Item label='Table Layout'>
           <Radio.Group value={tableLayout} onChange={handleTableLayoutChange}>
             <Radio.Button value={undefined}>Unset</Radio.Button>
-            <Radio.Button value="fixed">Fixed</Radio.Button>
+            <Radio.Button value='fixed'>Fixed</Radio.Button>
           </Radio.Group>
         </Form.Item>
-        <Form.Item label="Pagination Top">
+        <Form.Item label='Pagination Top'>
           <Radio.Group
             value={top}
             onChange={(e) => {
               setTop(e.target.value);
             }}
           >
-            <Radio.Button value="topLeft">TopLeft</Radio.Button>
-            <Radio.Button value="topCenter">TopCenter</Radio.Button>
-            <Radio.Button value="topRight">TopRight</Radio.Button>
-            <Radio.Button value="none">None</Radio.Button>
+            <Radio.Button value='topLeft'>TopLeft</Radio.Button>
+            <Radio.Button value='topCenter'>TopCenter</Radio.Button>
+            <Radio.Button value='topRight'>TopRight</Radio.Button>
+            <Radio.Button value='none'>None</Radio.Button>
           </Radio.Group>
         </Form.Item>
-        <Form.Item label="Pagination Bottom">
+        <Form.Item label='Pagination Bottom'>
           <Radio.Group
             value={bottom}
             onChange={(e) => {
               setBottom(e.target.value);
             }}
           >
-            <Radio.Button value="bottomLeft">BottomLeft</Radio.Button>
-            <Radio.Button value="bottomCenter">BottomCenter</Radio.Button>
-            <Radio.Button value="bottomRight">BottomRight</Radio.Button>
-            <Radio.Button value="none">None</Radio.Button>
+            <Radio.Button value='bottomLeft'>BottomLeft</Radio.Button>
+            <Radio.Button value='bottomCenter'>BottomCenter</Radio.Button>
+            <Radio.Button value='bottomRight'>BottomRight</Radio.Button>
+            <Radio.Button value='none'>None</Radio.Button>
           </Radio.Group>
         </Form.Item>
       </Form>
