@@ -23,7 +23,6 @@ import {
 import { ColumnsType, TableProps } from 'antd/es/table';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import GenderChooseButton from '../button/gender-choose-btn';
 
 function CustomAdminUserTable() {
   const [searchData, setSearchData] = useState('');
