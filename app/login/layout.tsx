@@ -12,10 +12,7 @@ export default function DashboardLayout({
   return (
     <Layout
       style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '98vh',
+        height: '100vh',
       }}
     >
       <Content

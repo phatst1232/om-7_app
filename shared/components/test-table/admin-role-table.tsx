@@ -1,6 +1,6 @@
 'use client';
 
-import { getSearchUser, updateUserStatus } from '@/lib/action/user-action';
+import { getSearchUser, callUpdateUser } from '@/lib/action/user-action';
 import { User } from '@/lib/dto/dashboard-dtos';
 import { LOGIN_PATH } from '@/shared/common/app-route';
 import {
@@ -188,7 +188,7 @@ function AdminRoleTable() {
     async function updateStatus(token: string) {
       // setTableLoading(true);
       if (userToUpdate) {
-        const user = await updateUserStatus(userToUpdate, token);
+        const user = await callUpdateUser(userToUpdate, token);
         if (user) {
           fetchData(token);
         }

@@ -6,7 +6,7 @@ export default function ClvLogo() {
     <Image
       src={clvLogo}
       style={{
-        width: 300,
+        width: 400,
         height: 'auto',
       }}
       priority={false}

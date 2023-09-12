@@ -51,7 +51,7 @@ export default function DashboardLayout({
           Header
         </Header> */}
         <Content style={{ color: 'black', margin: '0 16px' }}>
-          <StyledComponentsRegistry>{children}</StyledComponentsRegistry>
+          {children}
         </Content>
         <Footer style={{ textAlign: 'center' }}>
           @Copyright CyberLogitec 2023

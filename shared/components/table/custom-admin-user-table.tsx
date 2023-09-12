@@ -1,6 +1,10 @@
 'use client';
 
-import { getSearchUser, updateUserStatus } from '@/lib/action/user-action';
+import {
+  getSearchUser,
+  callUpdateUser,
+  callDeleteUser,
+} from '@/lib/action/user-action';
 import { User } from '@/lib/dto/dashboard-dtos';
 import { LOGIN_PATH } from '@/shared/common/app-route';
 import {
@@ -12,21 +16,38 @@ import {
   Popconfirm,
   Space,
   Tag,
+  InputNumber,
+  Select,
+  SelectProps,
 } from 'antd'; // Import Switch from Ant Design
 import { ColumnsType, TableProps } from 'antd/es/table';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import GenderChooseButton from '../button/gender-choose-btn';
 
 function CustomAdminUserTable() {
   const [searchData, setSearchData] = useState('');
   // const [columns, setColumns] = useState<ColumnConfig[]>([]);
   const [dataSource, setDataSource] = useState<User[]>([]);
   const [tableLoading, setTableLoading] = useState(false);
+  const [swtLoading, setSwtLoading] = useState(false);
   const [triggerSearch, setTriggerSearch] = useState(true);
   const [userToUpdate, setUserToUpdate] = useState<User>();
+  const [userToDelete, setUserToDelete] = useState<User>();
+
   const router = useRouter();
 
-  const userColsConfig: ColumnsType<User> = [
+  const options: SelectProps['options'] = [];
+  const handleChange = (value: string[]) => {
+    form.setFieldValue('gender', value);
+  };
+
+  // antd's datatype copy || avoid columns type error
+  type FixedType = 'left' | 'right' | boolean;
+  const leftFixed: FixedType = 'left';
+  const rightFixed: FixedType = 'right';
+
+  const userColsConfig = [
     // {
     //   title: "Id",
     //   dataIndex: "id",
@@ -36,23 +57,30 @@ function CustomAdminUserTable() {
     {
       title: 'Username',
       dataIndex: 'username',
-      key: 'username',
+      key: 0,
+      width: 100,
+      fixed: leftFixed,
     },
     {
       title: 'Full Name',
       dataIndex: 'fullName',
-      key: 'fullName',
+      key: 1,
+      width: 100,
+      editable: true,
     },
     {
       title: 'Email',
       dataIndex: 'email',
-      key: 'email',
+      key: 2,
+      width: 200,
+      editable: true,
     },
     {
       title: 'Gender',
       dataIndex: 'gender',
-      width: '5%',
-      key: 'gender',
+      width: 80,
+      key: 3,
+      editable: true,
       render: (text: any, record: User) => (
         <p>{record.gender ? 'male' : 'female'}</p>
       ),
@@ -60,13 +88,15 @@ function CustomAdminUserTable() {
     {
       title: 'Avatar',
       dataIndex: 'image',
-      key: 'image',
-      width: '5%',
+      key: 4,
+      width: 100,
+      editable: true,
     },
     {
       title: 'Create Date',
       dataIndex: 'createAt',
-      key: 'createAt',
+      key: 5,
+      width: 100,
       render: (text: any, record: User) => {
         const date = new Date(record.createdAt);
         return date.toDateString();
@@ -75,12 +105,14 @@ function CustomAdminUserTable() {
     {
       title: 'DOB',
       dataIndex: 'dateOfBirth',
-      key: 'dateOfBirth',
+      key: 6,
+      width: 100,
+      editable: true,
     },
     {
       title: 'Roles',
       dataIndex: 'roles',
-      key: 'roles',
+      key: 7,
       width: '10%',
       render: (text: any, record: User) => (
         <span>
@@ -101,12 +133,16 @@ function CustomAdminUserTable() {
     {
       title: 'Status',
       dataIndex: 'status',
-      key: 'status',
+      key: 8,
+      fixed: rightFixed,
+      width: 35,
       render: (text: any, record: User) => (
         // <Popconfirm title="Update user status?" onConfirm={() => processUpdateStatus(record)}>
         // </Popconfirm>
         <Switch
-          onClick={() => processUpdateStatus(record)}
+          key={record.id}
+          loading={swtLoading}
+          onClick={() => handleUpdateStatus(record)}
           // onChange={() => processUpdateStatus(record)}
           checked={record.status.toLowerCase() === 'active'}
         />
@@ -114,24 +150,88 @@ function CustomAdminUserTable() {
     },
     {
       title: 'Operation',
-      render: (text: any, record: User) => (
-        <Space>
-          <Button type='primary' onClick={() => edit}>
-            Edit
-          </Button>
-          <Popconfirm
-            placement='left'
-            title='Delete this user?'
-            onConfirm={() => processUpdateStatus(record)}
-          >
-            <Button type='primary' danger>
-              Delete
+      dataIndex: 9,
+      width: 100,
+      key: 9,
+      fixed: rightFixed,
+      render: (text: any, record: User) => {
+        const editable = isEditing(record);
+        return editable ? (
+          <Space>
+            <Button type='primary' onClick={() => save(record)}>
+              Save
             </Button>
-          </Popconfirm>
-        </Space>
-      ),
+            <Popconfirm
+              placement='left'
+              title='Cancel update?'
+              onConfirm={cancel}
+            >
+              <Button>Cancel</Button>
+            </Popconfirm>
+          </Space>
+        ) : (
+          <Space>
+            <Button type='primary' ghost onClick={() => edit(record)}>
+              Edit
+            </Button>
+            <Popconfirm
+              placement='left'
+              title='Delete this user?'
+              onConfirm={() => handleDeleteUser(record)}
+            >
+              <Button type='primary' danger>
+                Delete
+              </Button>
+            </Popconfirm>
+          </Space>
+        );
+      },
     },
   ];
+
+  const editableColumns = userColsConfig.map((col) => {
+    if (!col.editable) {
+      return col;
+    }
+
+    if (col.dataIndex === 'gender') {
+      return {
+        ...col,
+        render: (text: any, record: User) =>
+          isEditing(record) ? (
+            <Select
+              defaultValue={[record.gender ? 'male' : 'female']}
+              style={{ width: 120 }}
+              onChange={handleChange}
+              options={[
+                { value: true, label: 'male' },
+                { value: false, label: 'female' },
+              ]}
+            />
+          ) : (
+            <p>{record.gender ? 'male' : 'female'}</p>
+          ),
+        onCell: (record: User) => ({
+          record,
+          inputType: 'boolean',
+          dataIndex: 'gender',
+          title: col.title,
+          // editing: isEditing(record),
+        }),
+      };
+    }
+    return {
+      ...col,
+      onCell: (record: User) => ({
+        record,
+        inputType: col.dataIndex === 'gender' ? 'boolean' : 'text',
+        dataIndex: col.dataIndex,
+        title: col.title,
+        editing: isEditing(record),
+      }),
+    };
+  });
+
   const defaultExpandable = {
     expandedRowRender: (record: User) => (
       <span>
@@ -148,34 +248,127 @@ function CustomAdminUserTable() {
         })}
       </span>
     ),
+    // rowExpandable: (record: User) => // conditions of expandable rows',
   };
+
+  interface EditableCellProps extends React.HTMLAttributes<HTMLElement> {
+    editing: boolean;
+    dataIndex: string;
+    title: any;
+    inputType: 'number' | 'text';
+    record: User;
+    index: number;
+    children: React.ReactNode;
+  }
+
+  const EditableCell: React.FC<EditableCellProps> = ({
+    editing,
+    dataIndex,
+    title,
+    inputType,
+    record,
+    index,
+    children,
+    ...restProps
+  }) => {
+    const inputNode = inputType === 'number' ? <InputNumber /> : <Input />;
+
+    return (
+      <td {...restProps}>
+        {editing ? (
+          <Form.Item
+            name={dataIndex}
+            style={{ margin: 0 }}
+            rules={[
+              {
+                required: true,
+                message: `Please Input ${title}!`,
+              },
+            ]}
+          >
+            {inputNode}
+          </Form.Item>
+        ) : (
+          children
+        )}
+      </td>
+    );
+  };
+
   const tableProps: TableProps<User> = {
+    rowKey: (user) => user.id,
     bordered: true,
     loading: tableLoading,
     size: 'small',
     expandable: defaultExpandable,
     title: () => <h1>User Management</h1>,
     showHeader: true,
-    // footer: () => 'Here is footer',
     rowSelection: {},
-    scroll: { x: '100vw', y: 300 },
-    tableLayout: 'auto',
+    sticky: true,
+    // scroll: { x: 300, y: 300 },
+    // // tableLayout: 'auto',
   };
 
   const [form] = Form.useForm();
   const [editingKey, setEditingKey] = useState('');
-  const [data, setData] = useState(dataSource);
+  const isEditing = (record: User) => record.id === editingKey;
+  // const [data, setData] = useState(dataSource);
 
   const edit = (record: Partial<User> & { id: React.Key }) => {
-    form.setFieldsValue({ ...record });
+    form.setFieldsValue({
+      fullName: '',
+      email: '',
+      // gender: '',
+      image: '',
+      ...record,
+    });
     setEditingKey(record.id);
   };
 
-  const processUpdateStatus = (record: User) => {
+  const save = async (user: User) => {
+    try {
+      const row = (await form.validateFields()) as User;
+      const gender = form.getFieldValue('gender');
+      row.gender = gender;
+
+      const newData = [...dataSource];
+      const index = newData.findIndex((item) => user.id === item.id);
+      if (index > -1) {
+        //update
+        const item = newData[index];
+        newData.splice(index, 1, {
+          ...item,
+          ...row,
+        });
+        row.id = user.id;
+        setUserToUpdate(row);
+      } else {
+        //add
+        newData.push(row);
+        // setData(newData);
+      }
+
+      // setUserToUpdate(user);
+      setEditingKey('');
+    } catch (errInfo) {
+      console.log('Validate Failed:', errInfo);
+    }
+  };
+
+  const cancel = () => {
+    setEditingKey('');
+  };
+
+  const handleUpdateStatus = (record: User) => {
     // setTriggerSearch(!triggerSearch);
     record.status =
       record.status.toLowerCase() === 'active' ? 'Inactive' : 'Active';
     setUserToUpdate(record);
+  };
+
+  const handleDeleteUser = (user: User) => {
+    // setUserToDelete(user);
+    deleteUser(user);
   };
 
   useEffect(() => {
@@ -185,94 +378,20 @@ function CustomAdminUserTable() {
       return;
     }
 
-    async function updateStatus(token: string) {
-      // setTableLoading(true);
+    async function updateUser(token: string) {
       if (userToUpdate) {
-        const user = await updateUserStatus(userToUpdate, token);
+        const user = await callUpdateUser(userToUpdate, token);
         if (user) {
           fetchData(token);
         }
       }
     }
-    updateStatus(token);
-    // setTableLoading(false)
+    updateUser(token);
   }, [userToUpdate]);
 
   async function fetchData(token: string) {
-    // setTableLoading(true);
     const users = await getSearchUser(token, searchData);
-    // if (users.length === 0) {
-    //   // alert('No users found!');
-    //   setDataSource([]);
-    //   setTableLoading(false);
-    //   return;
-    // } else {
-    //   const firstUser = users[0];
-
-    //   if (firstUser) {
-    //     const cols = Object.keys(firstUser).map(key => {
-    //       const column: ColumnConfig = {
-    //         title: key,
-    //         dataIndex: key,
-
-    //       };
-
-    //       switch (key) {
-    //         case 'status':
-    //           column.render = (text: any, record: UserData) => (
-    //             <Switch checked={text === "active"} disabled />
-    //           );
-    //         case 'gender':
-    //           column.render = (text: any, record: UserData) => (
-    //             <p>{record.gender? 'male': 'female'}</p>
-    //           );
-    //         default:
-
-    //       }
-    //       return column;
-    //     });
-    //     cols.push({
-    //       title: "action",
-    //       key: "action",
-    //       // sorter: true,
-    //       render: (_: any, record: UserData) => {
-    //         const editable = isEditing(record);
-    //         return (
-    //           <div>
-    //             <Space>
-    //               {editable ? (
-    //                 <span>
-    //                   <a
-    //                     onClick={() => save(record.id)}
-    //                     style={{ marginRight: 8 }}
-    //                   >
-    //                     Save
-    //                   </a>
-    //                   <Popconfirm title="Sure to cancel?" onConfirm={cancel}>
-    //                     <a>Cancel</a>
-    //                   </Popconfirm>
-    //                 </span>
-    //               ) : (
-    //                 <a
-    //                   // disabled={false}
-    //                   onClick={() => edit(record)}
-    //                 >
-    //                   Edit
-    //                 </a>
-    //               )}
-    //               <a style={{ color: "red" }}>
-    //                 Delete
-    //               </a>
-    //             </Space>
-    //           </div>
-    //         );
-    //       },
-    //     });
-    //     setColumns(cols);
-    //   }
-    // }
     setDataSource(users);
-    // setTableLoading(false);
   }
 
   useEffect(() => {
@@ -283,11 +402,47 @@ function CustomAdminUserTable() {
     }
 
     fetchData(token);
-  }, [triggerSearch, userToUpdate]);
+  }, [triggerSearch]);
+
+  // useEffect(() => {
+  //   const token = localStorage.getItem('token');
+  //   if (!token) {
+  //     router.push(LOGIN_PATH);
+  //     return;
+  //   }
+
+  //   async function deleteUser(token: string) {
+  //     // setSwtLoading(true);
+  //     if (userToUpdate) {
+  //       const result = await callDeleteUser(userToUpdate, token);
+  //       if (result) {
+  //         fetchData(token);
+  //       } else {
+  //         alert('Delete user fail');
+  //       }
+  //     }
+  //     // setSwtLoading(false);
+  //   }
+  //   deleteUser(token);
+  // }, [userToDelete]);
+
+  const token = localStorage.getItem('token') || '';
+
+  async function deleteUser(user: User) {
+    if (user) {
+      const result = await callDeleteUser(user, token);
+      console.log('result', result);
+      if (result) {
+        fetchData(token);
+      } else {
+        alert('Delete user fail');
+      }
+    }
+  }
 
   return (
     <div>
-      <Space wrap>
+      <Space wrap style={{ marginBottom: '2rem', marginTop: '1rem' }}>
         <Input
           placeholder='username'
           value={searchData}
@@ -298,12 +453,33 @@ function CustomAdminUserTable() {
         </Button>
         <Button onClick={() => setSearchData('')}>Clear</Button>
       </Space>
-      <Table
-        {...tableProps}
-        columns={userColsConfig}
-        dataSource={dataSource}
-        rowClassName={() => 'editable-row'}
-      />
+      <Form form={form} component={false}>
+        <Table
+          {...tableProps}
+          components={{
+            body: {
+              cell: EditableCell,
+            },
+          }}
+          scroll={{ x: 2000, y: 500 }}
+          // tableLayout='auto'
+          columns={editableColumns} // cause by type of 'fixed' prop of 'collums' type config
+          dataSource={dataSource}
+          // rowClassName='editable-row'
+          pagination={{
+            onChange: cancel,
+          }}
+          summary={() => (
+            <Table.Summary fixed='top'>
+              {/* <Table.Summary.Row> */}
+              <Table.Summary.Cell index={0} colSpan={3} />
+              <Table.Summary.Cell index={3} colSpan={7} />
+              <Table.Summary.Cell index={10} colSpan={2} />
+              {/* </Table.Summary.Row> */}
+            </Table.Summary>
+          )}
+        />
+      </Form>
     </div>
   );
 }

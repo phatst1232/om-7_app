@@ -23,8 +23,14 @@ export const GET_USER_ROUTE = DOMAIN + process.env.NEXT_PUBLIC_GET_USER_ROUTE; /
 export const GET_ALL_USER_ROUTE =
   DOMAIN + process.env.NEXT_PUBLIC_GET_ALL_USER_ROUTE; //as RequestInfo;
 
+export const UPDATE_USER_ROUTE =
+  DOMAIN + process.env.NEXT_PUBLIC_UPDATE_USER_ROUTE; //as RequestInfo;
+
 export const UPDATE_USER_STATUS_ROUTE =
   DOMAIN + process.env.NEXT_PUBLIC_UPDATE_USER_STATUS_ROUTE; //as RequestInfo;
+
+export const DELETE_USER_ROUTE =
+  DOMAIN + process.env.NEXT_PUBLIC_DELETE_USER_ROUTE; //as RequestInfo;
 
 export const GET_LIST_PERMISSION_ROUTE =
   process.env.NEXT_PUBLIC_GET_LIST_PERMISSION_ROUTE; //as RequestInfo;

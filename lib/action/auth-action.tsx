@@ -4,6 +4,17 @@ import {
   LOGIN_ROUTE,
 } from '@/shared/common/api-route';
 import axios, { AxiosError } from 'axios';
+import useSWR from 'swr';
+
+const fetcher = (url: RequestInfo | URL) => fetch(url).then((res) => res.json());
+
+export default function useToken() {
+  const { data, error, isLoading } = useSWR(LOGIN_ROUTE, fetcher) 
+}
+
+
+
+
 
 export async function getToken(username: string, password: string) {
   try {
