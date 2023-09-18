@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Layout, Menu, MenuProps, theme } from 'antd';
 import SideBarMenu from '@/shared/components/sider/sidebar';
-import StyledComponentsRegistry from '@/lib/AntdRegistry';
+import { redirect } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 const { Header, Content, Sider, Footer } = Layout;
 
@@ -12,11 +13,14 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      redirect('/login');
+    },
+  });
 
-  const {
-    token: { colorBgContainer },
-  } = theme.useToken();
+  const [collapsed, setCollapsed] = useState(false);
   return (
     <Layout hasSider>
       <Sider
@@ -41,17 +45,8 @@ export default function DashboardLayout({
         className='site-layout'
         style={{ minHeight: '100vh', marginLeft: collapsed ? 85 : 190 }}
       >
-        {/* <Header
-          style={{
-            textAlign: "center",
-            margin: "16px 16px",
-            background: colorBgContainer,
-          }}
-        >
-          Header
-        </Header> */}
         <Content style={{ color: 'black', margin: '0 16px' }}>
-          {children}
+          {status === 'loading' ? <p>Loading feed...</p> : children}
         </Content>
         <Footer style={{ textAlign: 'center' }}>
           @Copyright CyberLogitec 2023

@@ -1,6 +1,9 @@
 export const DOMAIN = process.env.NEXT_PUBLIC_SYSTEM_DOMAIN as string;
 
-// Auth Route
+// NextAuth
+export const NEXT_AUTH_LOGIN_ROUTE = 'api/auth'; //as RequestInfo;
+
+// NestJS Auth Route
 export const LOGIN_GOOGLE_ROUTE = process.env.NEXT_PUBLIC_LOGIN_GOOGLE_ROUTE; //as RequestInfo; //
 
 export const LOGIN_ROUTE = DOMAIN + process.env.NEXT_PUBLIC_LOGIN_ROUTE; //as RequestInfo;

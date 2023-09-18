@@ -13,6 +13,7 @@ import {
   LOGIN_PATH,
   USER_TABLE_PATH,
 } from '@/shared/common/app-route';
+import { signOut } from 'next-auth/react';
 type MenuItem = Required<MenuProps>['items'][number];
 
 function getItem(
@@ -55,7 +56,7 @@ const items: MenuProps['items'] = [
 
   getItem('Admin', 'sub2', <UserOutlined />, [
     getItem('Profile', '6'),
-    getItem('Dashboard Home', '8'),
+    getItem('Test Space', '8'),
     getItem('Log out', '7', <RollbackOutlined />),
   ]),
 ];
@@ -70,8 +71,9 @@ const SideBarMenu: React.FC = () => {
         router.push(USER_TABLE_PATH);
         break;
       case '7':
-        localStorage.removeItem('token');
-        router.push(LOGIN_PATH);
+        // localStorage.removeItem('token');
+        // router.push(LOGIN_PATH);
+        signOut();
         break;
       case '8':
         router.push(DASHBOARD_PATH);
@@ -88,8 +90,8 @@ const SideBarMenu: React.FC = () => {
       onClick={onClick}
       theme='dark'
       style={{ animation: 'backwards', backgroundColor: '#202540' }}
-      defaultSelectedKeys={['1']}
-      defaultOpenKeys={['sub1']}
+      defaultSelectedKeys={['8']}
+      defaultOpenKeys={['sub1', 'sub2']}
       mode='inline'
       items={items}
     />

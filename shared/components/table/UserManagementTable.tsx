@@ -1,11 +1,10 @@
-'use client';
-
 import {
-  getSearchUser,
   callUpdateUser,
   callDeleteUser,
+  useSearchUserList,
 } from '@/lib/action/user-action';
 import { User } from '@/lib/dto/dashboard-dtos';
+import { GET_ALL_USER_ROUTE } from '@/shared/common/api-route';
 import { LOGIN_PATH } from '@/shared/common/app-route';
 import {
   Input,
@@ -21,27 +20,34 @@ import {
   SelectProps,
 } from 'antd'; // Import Switch from Ant Design
 import { ColumnsType, TableProps } from 'antd/es/table';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import useSWR from 'swr';
 
-function CustomAdminUserTable() {
+function UserManagementTable() {
+  const { data: session, status } = useSession();
+  if (
+    !session ||
+    status !== 'authenticated' ||
+    typeof session.user.accessToken !== 'string'
+  ) {
+    return <a href='/api/auth/signin'>Sign in</a>;
+  }
+  const token = session?.user.accessToken || '';
   const [searchData, setSearchData] = useState('');
-  // const [columns, setColumns] = useState<ColumnConfig[]>([]);
-  const [dataSource, setDataSource] = useState<User[]>([]);
-  const [tableLoading, setTableLoading] = useState(false);
-  const [swtLoading, setSwtLoading] = useState(false);
-  const [triggerSearch, setTriggerSearch] = useState(true);
-  const [userToUpdate, setUserToUpdate] = useState<User>();
-  const [userToDelete, setUserToDelete] = useState<User>();
-
   const router = useRouter();
-
-  const options: SelectProps['options'] = [];
+  const {
+    users,
+    isMutating: loadingUser,
+    searchUserError,
+    triggerSearchUser,
+  } = useSearchUserList(searchData, token);
+  console.log('Users: ', users);
   const handleChange = (value: string[]) => {
     form.setFieldValue('gender', value);
   };
 
-  // antd's datatype copy || avoid columns type error
   type FixedType = 'left' | 'right' | boolean;
   const leftFixed: FixedType = 'left';
   const rightFixed: FixedType = 'right';
@@ -112,7 +118,7 @@ function CustomAdminUserTable() {
       title: 'Roles',
       dataIndex: 'roles',
       key: 7,
-      width: '10%',
+      width: 74,
       render: (text: any, record: User) => (
         <span>
           {record.roles?.map((role) => {
@@ -136,15 +142,19 @@ function CustomAdminUserTable() {
       fixed: rightFixed,
       width: 35,
       render: (text: any, record: User) => (
-        // <Popconfirm title="Update user status?" onConfirm={() => processUpdateStatus(record)}>
-        // </Popconfirm>
-        <Switch
-          key={record.id}
-          loading={swtLoading}
-          onClick={() => handleUpdateStatus(record)}
-          // onChange={() => processUpdateStatus(record)}
-          checked={record.status.toLowerCase() === 'active'}
-        />
+        <Popconfirm
+          title='Update user status?'
+          // onPopupClick={() => setSwtLoading(true)}
+          onConfirm={() => handleUpdateStatus(record)}
+        >
+          <Switch
+            key={record.id}
+            // loading={swtLoading}
+            // onClick={() => setSwtLoading(true)}
+            // onChange={() => processUpdateStatus(record)}
+            checked={record.status.toLowerCase() === 'active'}
+          />
+        </Popconfirm>
       ),
     },
     {
@@ -176,7 +186,7 @@ function CustomAdminUserTable() {
             <Popconfirm
               placement='left'
               title='Delete this user?'
-              onConfirm={() => handleDeleteUser(record)}
+              onConfirm={() => handleDeleteUser(record.id)}
             >
               <Button type='primary' danger>
                 Delete
@@ -247,7 +257,6 @@ function CustomAdminUserTable() {
         })}
       </span>
     ),
-    // rowExpandable: (record: User) => // conditions of expandable rows',
   };
 
   interface EditableCellProps extends React.HTMLAttributes<HTMLElement> {
@@ -297,29 +306,28 @@ function CustomAdminUserTable() {
   const tableProps: TableProps<User> = {
     rowKey: (user) => user.id,
     bordered: true,
-    loading: tableLoading,
+    loading: false,
     size: 'small',
     expandable: defaultExpandable,
     title: () => <h1>User Management</h1>,
     showHeader: true,
     rowSelection: {},
     sticky: true,
-    // scroll: { x: 300, y: 300 },
     // // tableLayout: 'auto',
   };
 
   const [form] = Form.useForm();
   const [editingKey, setEditingKey] = useState('');
   const isEditing = (record: User) => record.id === editingKey;
-  // const [data, setData] = useState(dataSource);
 
   const edit = (record: Partial<User> & { id: React.Key }) => {
+    // set default values when enter editable cell mode
     form.setFieldsValue({
-      fullName: '',
-      email: '',
+      // fullName: '',  // default
+      // email: '',
       // gender: '',
-      image: '',
-      ...record,
+      // image: '',
+      ...record, // but ...record here overwrite the default values
     });
     setEditingKey(record.id);
   };
@@ -330,24 +338,20 @@ function CustomAdminUserTable() {
       const gender = form.getFieldValue('gender');
       row.gender = gender;
 
-      const newData = [...dataSource];
+      const newData = [...users];
       const index = newData.findIndex((item) => user.id === item.id);
       if (index > -1) {
         //update
-        const item = newData[index];
+        const usr = newData[index];
         newData.splice(index, 1, {
-          ...item,
+          ...usr,
           ...row,
         });
         row.id = user.id;
-        setUserToUpdate(row);
+        await updateUser(row);
       } else {
-        //add
         newData.push(row);
-        // setData(newData);
       }
-
-      // setUserToUpdate(user);
       setEditingKey('');
     } catch (errInfo) {
       console.log('Validate Failed:', errInfo);
@@ -358,86 +362,43 @@ function CustomAdminUserTable() {
     setEditingKey('');
   };
 
-  const handleUpdateStatus = (record: User) => {
-    // setTriggerSearch(!triggerSearch);
-    record.status =
-      record.status.toLowerCase() === 'active' ? 'Inactive' : 'Active';
-    setUserToUpdate(record);
-  };
-
-  const handleDeleteUser = (user: User) => {
-    // setUserToDelete(user);
-    deleteUser(user);
-  };
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push(LOGIN_PATH);
-      return;
+  const handleUpdateStatus = async (user: User) => {
+    user.status =
+      user.status.toLowerCase() === 'active' ? 'Inactive' : 'Active';
+    const updatedUser = await callUpdateUser(user, token);
+    if (updatedUser) {
+      triggerSearchUser();
     }
+  };
 
-    async function updateUser(token: string) {
-      if (userToUpdate) {
-        const user = await callUpdateUser(userToUpdate, token);
-        if (user) {
-          fetchData(token);
-        }
+  const handleDeleteUser = (id: string) => {
+    deleteUser(id);
+  };
+
+  async function updateUser(user: User) {
+    if (user) {
+      const userRes = await callUpdateUser(user, token);
+      if (userRes) {
+        triggerSearchUser();
       }
     }
-    updateUser(token);
-  }, [userToUpdate]);
-
-  async function fetchData(token: string) {
-    const users = await getSearchUser(token, searchData);
-    setDataSource(users);
   }
 
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      router.push(LOGIN_PATH);
-      return;
-    }
-
-    fetchData(token);
-  }, [triggerSearch]);
-
-  // useEffect(() => {
-  //   const token = localStorage.getItem('token');
-  //   if (!token) {
-  //     router.push(LOGIN_PATH);
-  //     return;
-  //   }
-
-  //   async function deleteUser(token: string) {
-  //     // setSwtLoading(true);
-  //     if (userToUpdate) {
-  //       const result = await callDeleteUser(userToUpdate, token);
-  //       if (result) {
-  //         fetchData(token);
-  //       } else {
-  //         alert('Delete user fail');
-  //       }
-  //     }
-  //     // setSwtLoading(false);
-  //   }
-  //   deleteUser(token);
-  // }, [userToDelete]);
-
-  const token = localStorage.getItem('token') || '';
-
-  async function deleteUser(user: User) {
-    if (user) {
-      const result = await callDeleteUser(user, token);
+  async function deleteUser(id: string) {
+    if (id) {
+      const result = await callDeleteUser(id, token);
       console.log('result', result);
       if (result) {
-        fetchData(token);
+        triggerSearchUser();
       } else {
         alert('Delete user fail');
       }
     }
   }
+
+  useEffect(() => {
+    triggerSearchUser();
+  }, []);
 
   return (
     <div>
@@ -447,40 +408,42 @@ function CustomAdminUserTable() {
           value={searchData}
           onChange={(e) => setSearchData(e.target.value)}
         />
-        <Button type='primary' onClick={() => setTriggerSearch(!triggerSearch)}>
+        <Button type='primary' onClick={() => triggerSearchUser()}>
           Search
         </Button>
         <Button onClick={() => setSearchData('')}>Clear</Button>
       </Space>
-      <Form form={form} component={false}>
-        <Table
-          {...tableProps}
-          components={{
-            body: {
-              cell: EditableCell,
-            },
-          }}
-          scroll={{ x: 2000, y: 500 }}
-          // tableLayout='auto'
-          columns={editableColumns} // cause by type of 'fixed' prop of 'collums' type config
-          dataSource={dataSource}
-          // rowClassName='editable-row'
-          pagination={{
-            onChange: cancel,
-          }}
-          summary={() => (
-            <Table.Summary fixed='top'>
-              {/* <Table.Summary.Row> */}
-              <Table.Summary.Cell index={0} colSpan={3} />
-              <Table.Summary.Cell index={3} colSpan={7} />
-              <Table.Summary.Cell index={10} colSpan={2} />
-              {/* </Table.Summary.Row> */}
-            </Table.Summary>
-          )}
-        />
-      </Form>
+      <Suspense fallback={<p>Loading...</p>}>
+        <Form form={form} component={false}>
+          <Table
+            {...tableProps}
+            components={{
+              body: {
+                cell: EditableCell,
+              },
+            }}
+            scroll={{ x: 2000, y: 500 }}
+            // tableLayout='auto'
+            columns={editableColumns} // cause by type of 'fixed' prop of 'collums' type config
+            dataSource={users}
+            // rowClassName='editable-row'
+            pagination={{
+              onChange: cancel,
+            }}
+            summary={() => (
+              <Table.Summary fixed='top'>
+                {/* <Table.Summary.Row> */}
+                <Table.Summary.Cell index={0} colSpan={3} />
+                <Table.Summary.Cell index={3} colSpan={7} />
+                <Table.Summary.Cell index={10} colSpan={2} />
+                {/* </Table.Summary.Row> */}
+              </Table.Summary>
+            )}
+          />
+        </Form>
+      </Suspense>
     </div>
   );
 }
 
-export default CustomAdminUserTable;
+export default UserManagementTable;

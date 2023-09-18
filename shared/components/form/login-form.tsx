@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { DASHBOARD_PATH } from '@/shared/common/app-route';
 import { getToken } from '@/lib/action/auth-action';
 import { GoogleOutlined } from '@ant-design/icons';
+import { signIn } from 'next-auth/react';
 
 const LoginForm: React.FC = () => {
   const router = useRouter();
@@ -16,18 +17,24 @@ const LoginForm: React.FC = () => {
 
   const onFinish = async (values: any) => {
     console.log('Received values of form: ', values);
-    const dataRes = await getToken(values.username, values.password);
-    if (dataRes?.access_token) {
-      router.push(DASHBOARD_PATH);
-      localStorage.setItem('token', dataRes.access_token);
-    } else {
-      if (dataRes?.message === 'Invalid password') {
+    const dataRes = await signIn('credentials', {
+      redirect: false,
+      username: values.username,
+      password: values.password,
+    });
+    if (dataRes?.error) {
+      if (dataRes.error === 'Invalid password') {
         setIsCorrectPassword(false);
       }
-      if (dataRes?.message === 'User not found') {
+      if (dataRes.error === 'User not found') {
         setIsValidUsername(false);
       }
       form.validateFields();
+    }
+    if (dataRes?.ok) {
+      router.push(DASHBOARD_PATH);
+      // localStorage.setItem('token', dataRes);
+    } else {
     }
   };
 

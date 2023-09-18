@@ -2,19 +2,19 @@ import {
   DOMAIN,
   LOGIN_GOOGLE_ROUTE,
   LOGIN_ROUTE,
+  NEXT_AUTH_LOGIN_ROUTE,
 } from '@/shared/common/api-route';
 import axios, { AxiosError } from 'axios';
 import useSWR from 'swr';
 
-const fetcher = (url: RequestInfo | URL) => fetch(url).then((res) => res.json());
+const fetcher = (url: RequestInfo | URL) =>
+  fetch(url).then((res) => res.json());
 
 export default function useToken() {
-  const { data, error, isLoading } = useSWR(LOGIN_ROUTE, fetcher) 
+  const { data, error, isLoading } = useSWR(LOGIN_ROUTE, fetcher);
 }
 
-
-
-
+export async function login(username: string, password: string) {}
 
 export async function getToken(username: string, password: string) {
   try {
