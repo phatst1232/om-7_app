@@ -1,14 +1,12 @@
 'use client';
 
-import StyledComponentsRegistry from '@/lib/AntdRegistry';
 import UserManagementTable from '@/shared/components/table/UserManagementTable';
-import { theme } from 'antd';
 import React from 'react';
 
-export default function DashboardHome() {
+export default function UserManagement() {
   return (
-    <StyledComponentsRegistry>
-      {/* <UserManagementTable /> */}
-    </StyledComponentsRegistry>
+    <div>
+      <UserManagementTable />
+    </div>
   );
 }

@@ -10,8 +10,9 @@ import { Menu, theme } from 'antd';
 import { useRouter } from 'next/navigation';
 import {
   DASHBOARD_PATH,
-  LOGIN_PATH,
-  USER_TABLE_PATH,
+  DASHBOARD_USER_PATH,
+  DASHBOARD_ROLE_PATH,
+  DASHBOARD_PERMISSION_PATH,
 } from '@/shared/common/app-route';
 import { signOut } from 'next-auth/react';
 type MenuItem = Required<MenuProps>['items'][number];
@@ -40,8 +41,8 @@ const items: MenuProps['items'] = [
       null,
       [
         getItem('User Table', '1'),
-        getItem('Update', '2'),
-        getItem('Activate Job', '3'),
+        // getItem('Update', '2'),
+        // getItem('Activate Job', '3'),
       ],
       'group'
     ),
@@ -49,7 +50,7 @@ const items: MenuProps['items'] = [
       'Permission Grant',
       'g2',
       null,
-      [getItem('User Role', '4'), getItem('User permission', '5')],
+      [getItem('User Role', '4'), getItem('User Permission', '5')],
       'group'
     ),
   ]),
@@ -68,11 +69,15 @@ const SideBarMenu: React.FC = () => {
     console.log('click ', e);
     switch (e.key) {
       case '1':
-        router.push(USER_TABLE_PATH);
+        router.push(DASHBOARD_USER_PATH);
+        break;
+      case '4':
+        router.push(DASHBOARD_ROLE_PATH);
+        break;
+      case '5':
+        router.push(DASHBOARD_PERMISSION_PATH);
         break;
       case '7':
-        // localStorage.removeItem('token');
-        // router.push(LOGIN_PATH);
         signOut();
         break;
       case '8':

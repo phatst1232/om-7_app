@@ -1,11 +1,12 @@
 'use client';
 
-import LoginForm from '@/shared/components/form/login-form';
+import LoginForm from '@/shared/components/form/LoginForm';
 import ClvLogo from '@/shared/components/logo/clvlogo';
 import { Space } from 'antd';
 import React from 'react';
 
-export default function DashboardHome() {
+export default function Login() {
+  const clvLogoWidth = '';
   return (
     <Space
       style={{
@@ -13,7 +14,7 @@ export default function DashboardHome() {
         flexDirection: 'column',
       }}
     >
-      <ClvLogo></ClvLogo>
+      <ClvLogo type='login' style={{ width: 350, height: 'auto' }}></ClvLogo>
       <LoginForm></LoginForm>
     </Space>
   );

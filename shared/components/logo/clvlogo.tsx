@@ -1,14 +1,26 @@
 import Image from 'next/image';
-import clvLogo from '../../icon/clv_logo.png';
+import loginLogo from '../../icon/clv_logo.png';
+import headerLogo from '../../icon/logo.png';
+import { CSSProperties } from 'react';
 
-export default function ClvLogo() {
+interface IProps {
+  type?: 'login' | 'header';
+  style?: CSSProperties | undefined;
+}
+
+export default function ClvLogo(props: IProps) {
+  const { type, style } = props;
+
   return (
     <Image
-      src={clvLogo}
-      style={{
-        width: 400,
-        height: 'auto',
-      }}
+      src={
+        type === 'login'
+          ? loginLogo
+          : type === 'header'
+          ? headerLogo
+          : headerLogo
+      }
+      style={style}
       priority={false}
       alt='CyberLogitec Viet Nam - Logo'
     />

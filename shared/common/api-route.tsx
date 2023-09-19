@@ -34,7 +34,32 @@ export const UPDATE_USER_STATUS_ROUTE =
 
 export const DELETE_USER_ROUTE =
   DOMAIN + process.env.NEXT_PUBLIC_DELETE_USER_ROUTE; //as RequestInfo;
+// role route
+export const GET_ALL_ROLE_ROUTE =
+  DOMAIN + process.env.NEXT_PUBLIC_GET_ALL_ROLE_ROUTE; //as RequestInfo;
 
+export const UPDATE_ROLE_ROUTE =
+  DOMAIN + process.env.NEXT_PUBLIC_UPDATE_ROLE_ROUTE; //as RequestInfo;
+
+export const UPDATE_ROLE_STATUS_ROUTE =
+  DOMAIN + process.env.NEXT_PUBLIC_UPDATE_ROLE_STATUS_ROUTE; //as RequestInfo;
+
+export const DELETE_ROLE_ROUTE =
+  DOMAIN + process.env.NEXT_PUBLIC_DELETE_ROLE_ROUTE; //as RequestInfo;
+// permission route
+export const GET_ALL_PERMISSION_ROUTE =
+  DOMAIN + process.env.NEXT_PUBLIC_GET_ALL_PERMISSION_ROUTE; //as RequestInfo;
+
+export const UPDATE_PERMISSION_ROUTE =
+  DOMAIN + process.env.NEXT_PUBLIC_UPDATE_PERMISSION_ROUTE; //as RequestInfo;
+
+export const UPDATE_PERMISSION_STATUS_ROUTE =
+  DOMAIN + process.env.NEXT_PUBLIC_UPDATE_PERMISSION_STATUS_ROUTE; //as RequestInfo;
+
+export const DELETE_PERMISSION_ROUTE =
+  DOMAIN + process.env.NEXT_PUBLIC_DELETE_PERMISSION_ROUTE;
+
+///
 export const GET_LIST_PERMISSION_ROUTE =
   process.env.NEXT_PUBLIC_GET_LIST_PERMISSION_ROUTE; //as RequestInfo;
 

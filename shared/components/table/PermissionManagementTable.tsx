@@ -1,11 +1,11 @@
 'use client';
 
 import {
-  callUpdateRole,
-  callDeleteRole,
-  useSearchRoleList,
-} from '@/lib/action/role-action';
-import { Role } from '@/lib/dto/dashboard-dtos';
+  callUpdatePermission,
+  callDeletePermission,
+  useSearchPermissionList,
+} from '@/lib/action/permission-action';
+import { Permission } from '@/lib/dto/dashboard-dtos';
 import {
   Input,
   Table,
@@ -22,7 +22,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { PlusCircleOutlined } from '@ant-design/icons';
-function RoleManagementTable() {
+function PermissionManagementTable() {
   const { data: session, status } = useSession();
   if (
     !session ||
@@ -35,12 +35,12 @@ function RoleManagementTable() {
   const [searchData, setSearchData] = useState('');
   const router = useRouter();
   const {
-    roles,
-    isMutating: loadingRole,
-    searchRoleError,
-    triggerSearchRole,
-  } = useSearchRoleList(searchData, token);
-  console.log('Roles: ', roles);
+    permissions,
+    isMutating: loadingPermission,
+    searchPermissionError,
+    triggerSearchPermission,
+  } = useSearchPermissionList(searchData, token);
+  console.log('Permissions: ', permissions);
   const handleChange = (value: string[]) => {
     form.setFieldValue('gender', value);
   };
@@ -49,15 +49,15 @@ function RoleManagementTable() {
   const leftFixed: FixedType = 'left';
   const rightFixed: FixedType = 'right';
 
-  const roleColsConfig = [
+  const permissionColsConfig = [
     // {
     //   title: "Id",
     //   dataIndex: "id",
     //   key: "id",
-    //   render: (text: any, record: RoleData) => <p>{record.id?.slice(-12)}</p>,
+    //   render: (text: any, record: PermissionData) => <p>{record.id?.slice(-12)}</p>,
     // },
     {
-      title: 'Role name',
+      title: 'Permission name',
       dataIndex: 'name',
       key: 0,
       width: 30,
@@ -71,35 +71,14 @@ function RoleManagementTable() {
       editable: true,
     },
     {
-      title: 'Permissions',
-      dataIndex: 'permissions',
-      key: 7,
-      width: 74,
-      render: (text: any, record: Role) => (
-        <span>
-          {record.permissions?.map((permission) => {
-            let color = permission !== 'Role' ? 'geekblue' : 'green';
-            if (permission === 'Admin') {
-              color = 'volcano';
-            }
-            return (
-              <Tag color={color} key={permission}>
-                {permission.toUpperCase()}
-              </Tag>
-            );
-          })}
-        </span>
-      ),
-    },
-    {
       title: 'Status',
       dataIndex: 'status',
       key: 8,
       // fixed: rightFixed,
       width: 35,
-      render: (text: any, record: Role) => (
+      render: (text: any, record: Permission) => (
         <Popconfirm
-          title='Update role status?'
+          title='Update permission status?'
           onConfirm={() => handleUpdateStatus(record)}
         >
           <Switch
@@ -115,7 +94,7 @@ function RoleManagementTable() {
       width: 100,
       key: 9,
       // fixed: rightFixed,
-      render: (text: any, record: Role) => {
+      render: (text: any, record: Permission) => {
         const editable = isEditing(record);
         return editable ? (
           <Space>
@@ -137,8 +116,8 @@ function RoleManagementTable() {
             </Button>
             <Popconfirm
               placement='left'
-              title='Delete this role?'
-              onConfirm={() => handleDeleteRole(record.id)}
+              title='Delete this permission?'
+              onConfirm={() => handleDeletePermission(record.id)}
             >
               <Button type='primary' danger>
                 Delete
@@ -150,13 +129,13 @@ function RoleManagementTable() {
     },
   ];
 
-  const editableColumns = roleColsConfig.map((col) => {
+  const editableColumns = permissionColsConfig.map((col) => {
     if (!col.editable) {
       return col;
     }
     return {
       ...col,
-      onCell: (record: Role) => ({
+      onCell: (record: Permission) => ({
         record,
         inputType: col.dataIndex === 'status' ? 'boolean' : 'text',
         dataIndex: col.dataIndex,
@@ -167,19 +146,9 @@ function RoleManagementTable() {
   });
 
   const defaultExpandable = {
-    expandedRowRender: (record: Role) => (
+    expandedRowRender: (record: Permission) => (
       <span>
-        {record.permissions?.map((permission) => {
-          let color = permission !== 'Role' ? 'geekblue' : 'green';
-          if (permission === 'Admin') {
-            color = 'volcano';
-          }
-          return (
-            <Tag color={color} key={permission}>
-              {permission.toUpperCase()}
-            </Tag>
-          );
-        })}
+        <p>{record.description}</p>
       </span>
     ),
   };
@@ -189,7 +158,7 @@ function RoleManagementTable() {
     dataIndex: string;
     title: any;
     inputType: 'number' | 'text';
-    record: Role;
+    record: Permission;
     index: number;
     children: React.ReactNode;
   }
@@ -228,8 +197,8 @@ function RoleManagementTable() {
     );
   };
 
-  const tableProps: TableProps<Role> = {
-    rowKey: (role) => role.id,
+  const tableProps: TableProps<Permission> = {
+    rowKey: (permission) => permission.id,
     bordered: true,
     loading: false,
     size: 'small',
@@ -243,13 +212,13 @@ function RoleManagementTable() {
           justifyContent: 'space-between',
         }}
       >
-        <h1>Role Management</h1>
+        <h1>Permission Management</h1>
         <Button
           type='primary'
           icon={<PlusCircleOutlined />}
           style={{ marginRight: 30 }}
         >
-          New Role
+          New Permission
         </Button>
       </div>
     ),
@@ -261,21 +230,21 @@ function RoleManagementTable() {
 
   const [form] = Form.useForm();
   const [editingKey, setEditingKey] = useState('');
-  const isEditing = (record: Role) => record.id === editingKey;
+  const isEditing = (record: Permission) => record.id === editingKey;
 
-  const edit = (record: Partial<Role> & { id: React.Key }) => {
+  const edit = (record: Partial<Permission> & { id: React.Key }) => {
     form.setFieldsValue({
       ...record,
     });
     setEditingKey(record.id);
   };
 
-  const save = async (role: Role) => {
+  const save = async (permission: Permission) => {
     try {
-      const row = (await form.validateFields()) as Role;
+      const row = (await form.validateFields()) as Permission;
 
-      const newData = [...roles];
-      const index = newData.findIndex((item) => role.id === item.id);
+      const newData = [...permissions];
+      const index = newData.findIndex((item) => permission.id === item.id);
       if (index > -1) {
         //update
         const usr = newData[index];
@@ -283,8 +252,8 @@ function RoleManagementTable() {
           ...usr,
           ...row,
         });
-        row.id = role.id;
-        await updateRole(row);
+        row.id = permission.id;
+        await updatePermission(row);
       } else {
         newData.push(row);
       }
@@ -298,53 +267,53 @@ function RoleManagementTable() {
     setEditingKey('');
   };
 
-  const handleUpdateStatus = async (role: Role) => {
-    role.status =
-      role.status.toLowerCase() === 'active' ? 'Inactive' : 'Active';
-    const updatedRole = await callUpdateRole(role, token);
-    if (updatedRole) {
-      triggerSearchRole();
+  const handleUpdateStatus = async (permission: Permission) => {
+    permission.status =
+      permission.status.toLowerCase() === 'active' ? 'Inactive' : 'Active';
+    const updatedPermission = await callUpdatePermission(permission, token);
+    if (updatedPermission) {
+      triggerSearchPermission();
     }
   };
 
-  const handleDeleteRole = (id: string) => {
-    deleteRole(id);
+  const handleDeletePermission = (id: string) => {
+    deletePermission(id);
   };
 
-  async function updateRole(role: Role) {
-    if (role) {
-      const roleRes = await callUpdateRole(role, token);
-      if (roleRes) {
-        triggerSearchRole();
+  async function updatePermission(permission: Permission) {
+    if (permission) {
+      const permissionRes = await callUpdatePermission(permission, token);
+      if (permissionRes) {
+        triggerSearchPermission();
       }
     }
   }
 
-  async function deleteRole(id: string) {
+  async function deletePermission(id: string) {
     if (id) {
-      const result = await callDeleteRole(id, token);
+      const result = await callDeletePermission(id, token);
       console.log('result', result);
       if (result) {
-        triggerSearchRole();
+        triggerSearchPermission();
       } else {
-        alert('Delete role fail');
+        alert('Delete permission fail');
       }
     }
   }
 
   useEffect(() => {
-    triggerSearchRole();
+    triggerSearchPermission();
   }, []);
 
   return (
     <div>
       <Space wrap style={{ marginBottom: '2rem', marginTop: '1rem' }}>
         <Input
-          placeholder='rolename'
+          placeholder='permissionname'
           value={searchData}
           onChange={(e) => setSearchData(e.target.value)}
         />
-        <Button type='primary' onClick={() => triggerSearchRole()}>
+        <Button type='primary' onClick={() => triggerSearchPermission()}>
           Search
         </Button>
         <Button onClick={() => setSearchData('')}>Clear</Button>
@@ -361,7 +330,7 @@ function RoleManagementTable() {
             scroll={{ x: '100%', y: 500 }}
             // tableLayout='auto'
             columns={editableColumns} // cause by type of 'fixed' prop of 'collums' type config
-            dataSource={roles}
+            dataSource={permissions}
             // rowClassName='editable-row'
             pagination={{
               onChange: cancel,
@@ -382,4 +351,4 @@ function RoleManagementTable() {
   );
 }
 
-export default RoleManagementTable;
+export default PermissionManagementTable;

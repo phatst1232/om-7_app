@@ -1,14 +1,14 @@
 import axios, { AxiosError } from 'axios';
 import {
-  DELETE_USER_ROUTE,
-  GET_ALL_USER_ROUTE,
-  UPDATE_USER_ROUTE,
+  DELETE_PERMISSION_ROUTE,
+  GET_ALL_PERMISSION_ROUTE,
+  UPDATE_PERMISSION_ROUTE,
 } from '@/shared/common/api-route';
-import { User } from '../dto/dashboard-dtos';
+import { Permission } from '../dto/dashboard-dtos';
 import useSWRMutation from 'swr/mutation';
 import { getAuthorizationHeader } from './header';
 
-const searchUserListFetcher = (
+const searchPermissionListFetcher = (
   url: string,
   searchData: string,
   token: string
@@ -17,26 +17,26 @@ const searchUserListFetcher = (
   return axios.post(url, { searchData }, { headers }).then((res) => res.data);
 };
 
-export function useSearchUserList(searchData: string, token: string) {
+export function useSearchPermissionList(searchData: string, token: string) {
   const { data, error, isMutating, trigger } = useSWRMutation(
-    GET_ALL_USER_ROUTE,
-    (url) => searchUserListFetcher(url, searchData, token)
+    GET_ALL_PERMISSION_ROUTE,
+    (url) => searchPermissionListFetcher(url, searchData, token)
   );
   return {
-    users: data,
+    permissions: data,
     isMutating: isMutating,
-    searchUserError: error,
-    triggerSearchUser: trigger,
+    searchPermissionError: error,
+    triggerSearchPermission: trigger,
   };
 }
 
-export async function callDeleteUser(
+export async function callDeletePermission(
   id: string,
   token: string
 ): Promise<boolean> {
   try {
     const headers = getAuthorizationHeader(token);
-    const response = await axios.delete(`${DELETE_USER_ROUTE}/${id}`, {
+    const response = await axios.delete(`${DELETE_PERMISSION_ROUTE}/${id}`, {
       headers,
     });
     console.log('response', response);
@@ -47,28 +47,29 @@ export async function callDeleteUser(
   }
 }
 
-export async function callUpdateUser(user: User, token: string): Promise<User> {
+export async function callUpdatePermission(
+  permission: Permission,
+  token: string
+): Promise<Permission> {
   try {
     const headers = getAuthorizationHeader(token);
-    const id = user.id;
+    const id = permission.id;
     const response = await axios.put(
-      `${UPDATE_USER_ROUTE}/${id}`,
+      `${UPDATE_PERMISSION_ROUTE}/${id}`,
       {
-        fullName: user.fullName,
-        email: user.email,
-        image: user.image,
-        gender: user.gender,
-        status: user.status,
+        name: permission.name,
+        description: permission.description,
+        status: permission.status,
       },
       { headers }
     );
-    console.log('Update user Res:  ', response.data);
-    const res: User = response.data;
+    console.log('Update permission Res:  ', response.data);
+    const res: Permission = response.data;
     return res;
   } catch (error) {
     if (error instanceof AxiosError) {
       if (error.response?.status === 404) {
-        alert('User not found');
+        alert('Permission not found');
       }
       if (error.response?.status === 201) {
         return error.response.data;

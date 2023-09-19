@@ -1,3 +1,4 @@
+'use client';
 import {
   callUpdateUser,
   callDeleteUser,
@@ -18,6 +19,7 @@ import {
   InputNumber,
   Select,
   SelectProps,
+  Spin,
 } from 'antd'; // Import Switch from Ant Design
 import { ColumnsType, TableProps } from 'antd/es/table';
 import { useSession } from 'next-auth/react';
@@ -32,7 +34,7 @@ function UserManagementTable() {
     status !== 'authenticated' ||
     typeof session.user.accessToken !== 'string'
   ) {
-    return <a href='/api/auth/signin'>Sign in</a>;
+    return;
   }
   const token = session?.user.accessToken || '';
   const [searchData, setSearchData] = useState('');
@@ -413,7 +415,7 @@ function UserManagementTable() {
         </Button>
         <Button onClick={() => setSearchData('')}>Clear</Button>
       </Space>
-      <Suspense fallback={<p>Loading...</p>}>
+      <Suspense fallback={<Spin tip='Loading...' />}>
         <Form form={form} component={false}>
           <Table
             {...tableProps}
