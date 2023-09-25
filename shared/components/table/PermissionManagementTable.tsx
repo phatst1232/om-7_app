@@ -4,6 +4,7 @@ import {
   callUpdatePermission,
   callDeletePermission,
   useSearchPermissionList,
+  callCreatePermission,
 } from '@/lib/action/permission-action';
 import { Permission } from '@/lib/dto/dashboard-dtos';
 import {
@@ -16,12 +17,15 @@ import {
   Space,
   Tag,
   InputNumber,
+  Modal,
+  Checkbox,
 } from 'antd'; // Import Switch from Ant Design
 import { TableProps } from 'antd/es/table';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
-import { PlusCircleOutlined } from '@ant-design/icons';
+import { PlusCircleOutlined, PlusOutlined } from '@ant-design/icons';
+import TextArea from 'antd/es/input/TextArea';
 function PermissionManagementTable() {
   const { data: session, status } = useSession();
   if (
@@ -33,6 +37,7 @@ function PermissionManagementTable() {
   }
   const token = session?.user.accessToken || '';
   const [searchData, setSearchData] = useState('');
+  const [deleting, setDeleting] = useState(false);
   const router = useRouter();
   const {
     permissions,
@@ -41,33 +46,24 @@ function PermissionManagementTable() {
     triggerSearchPermission,
   } = useSearchPermissionList(searchData, token);
   console.log('Permissions: ', permissions);
-  const handleChange = (value: string[]) => {
-    form.setFieldValue('gender', value);
-  };
 
   type FixedType = 'left' | 'right' | boolean;
   const leftFixed: FixedType = 'left';
   const rightFixed: FixedType = 'right';
 
   const permissionColsConfig = [
-    // {
-    //   title: "Id",
-    //   dataIndex: "id",
-    //   key: "id",
-    //   render: (text: any, record: PermissionData) => <p>{record.id?.slice(-12)}</p>,
-    // },
     {
       title: 'Permission name',
       dataIndex: 'name',
       key: 0,
-      width: 30,
+      width: 200,
       // fixed: leftFixed,
     },
     {
       title: 'Description',
       dataIndex: 'description',
       key: 1,
-      width: 100,
+      // width: 100,
       editable: true,
     },
     {
@@ -75,7 +71,7 @@ function PermissionManagementTable() {
       dataIndex: 'status',
       key: 8,
       // fixed: rightFixed,
-      width: 35,
+      width: 65,
       render: (text: any, record: Permission) => (
         <Popconfirm
           title='Update permission status?'
@@ -91,7 +87,7 @@ function PermissionManagementTable() {
     {
       title: 'Operation',
       dataIndex: 9,
-      width: 100,
+      width: 165,
       key: 9,
       // fixed: rightFixed,
       render: (text: any, record: Permission) => {
@@ -119,7 +115,7 @@ function PermissionManagementTable() {
               title='Delete this permission?'
               onConfirm={() => handleDeletePermission(record.id)}
             >
-              <Button type='primary' danger>
+              <Button type='primary' danger hidden={deleting}>
                 Delete
               </Button>
             </Popconfirm>
@@ -215,8 +211,9 @@ function PermissionManagementTable() {
         <h1>Permission Management</h1>
         <Button
           type='primary'
-          icon={<PlusCircleOutlined />}
+          icon={<PlusOutlined />}
           style={{ marginRight: 30 }}
+          onClick={showModal}
         >
           New Permission
         </Button>
@@ -276,8 +273,10 @@ function PermissionManagementTable() {
     }
   };
 
-  const handleDeletePermission = (id: string) => {
-    deletePermission(id);
+  const handleDeletePermission = async (id: string) => {
+    setDeleting(true);
+    await deletePermission(id);
+    setDeleting(false);
   };
 
   async function updatePermission(permission: Permission) {
@@ -297,6 +296,7 @@ function PermissionManagementTable() {
         triggerSearchPermission();
       } else {
         alert('Delete permission fail');
+        triggerSearchPermission();
       }
     }
   }
@@ -305,11 +305,59 @@ function PermissionManagementTable() {
     triggerSearchPermission();
   }, []);
 
+  const [createForm] = Form.useForm();
+
+  const onFinish = (values: any) => {
+    console.log('Success:', values);
+  };
+
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const onFinishFailed = (errorInfo: any) => {
+    console.log('Failed:', errorInfo);
+  };
+
+  type FieldType = {
+    permissionName?: string;
+    description?: string;
+    remember?: string;
+  };
+
+  const showModal = () => {
+    setOpen(true);
+  };
+
+  const callCreate = async (values: any) => {
+    setLoading(true);
+    callCreatePermission(
+      { name: values.permissionName, description: values.description },
+      token
+    );
+    setTimeout(() => {
+      setLoading(false);
+      setOpen(false);
+      createForm.resetFields();
+      triggerSearchPermission();
+    }, 3000);
+  };
+  const handleClickCreate = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      setOpen(false);
+    }, 3000);
+  };
+
+  const handleCancel = () => {
+    setOpen(false);
+    createForm.resetFields();
+  };
   return (
     <div>
       <Space wrap style={{ marginBottom: '2rem', marginTop: '1rem' }}>
         <Input
-          placeholder='permissionname'
+          placeholder='Permission name'
           value={searchData}
           onChange={(e) => setSearchData(e.target.value)}
         />
@@ -327,26 +375,71 @@ function PermissionManagementTable() {
                 cell: EditableCell,
               },
             }}
-            scroll={{ x: '100%', y: 500 }}
-            // tableLayout='auto'
+            scroll={{ x: '100%', y: 'auto' }}
+            loading={loadingPermission}
             columns={editableColumns} // cause by type of 'fixed' prop of 'collums' type config
             dataSource={permissions}
             // rowClassName='editable-row'
             pagination={{
               onChange: cancel,
             }}
-            summary={() => (
-              <Table.Summary fixed='top'>
-                {/* <Table.Summary.Row> */}
-                <Table.Summary.Cell index={0} colSpan={3} />
-                <Table.Summary.Cell index={3} colSpan={7} />
-                <Table.Summary.Cell index={10} colSpan={2} />
-                {/* </Table.Summary.Row> */}
-              </Table.Summary>
-            )}
           />
         </Form>
       </Suspense>
+
+      <Modal
+        open={open}
+        title={<h2 style={{ textAlign: 'center' }}>New permission</h2>}
+        onOk={handleClickCreate}
+        onCancel={handleCancel}
+        footer={[]}
+      >
+        <Form
+          name='basic'
+          form={createForm}
+          labelCol={{ span: 8 }}
+          wrapperCol={{ span: 16 }}
+          style={{ maxWidth: 600, marginTop: '2rem' }}
+          initialValues={{ remember: true }}
+          onFinish={callCreate}
+          onFinishFailed={onFinishFailed}
+          autoComplete='off'
+        >
+          <Form.Item<FieldType>
+            label='Permission Name'
+            name='permissionName'
+            rules={[
+              { required: true, message: 'Please input name of permission!' },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item<FieldType>
+            label='Description'
+            name='description'
+            // rules={[{ required: true, message: 'Please input your password!' }]}
+          >
+            <TextArea rows={4} />
+          </Form.Item>
+
+          <Form.Item style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Space style={{ display: 'flex', justifyContent: 'center' }}>
+              <Button key='back' onClick={handleCancel}>
+                Cancel
+              </Button>
+              <Button
+                key='submit'
+                type='primary'
+                loading={loading}
+                // onClick={handleCreate}
+                htmlType='submit'
+              >
+                Create
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 }

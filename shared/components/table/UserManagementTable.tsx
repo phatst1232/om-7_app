@@ -425,7 +425,7 @@ function UserManagementTable() {
               },
             }}
             scroll={{ x: 2000, y: 500 }}
-            // tableLayout='auto'
+            loading={loadingUser}
             columns={editableColumns} // cause by type of 'fixed' prop of 'collums' type config
             dataSource={users}
             // rowClassName='editable-row'

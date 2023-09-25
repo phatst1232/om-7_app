@@ -1,10 +1,11 @@
 import axios, { AxiosError } from 'axios';
 import {
+  CREATE_PERMISSION_ROUTE,
   DELETE_PERMISSION_ROUTE,
   GET_ALL_PERMISSION_ROUTE,
   UPDATE_PERMISSION_ROUTE,
 } from '@/shared/common/api-route';
-import { Permission } from '../dto/dashboard-dtos';
+import { CreatePermissionDto, Permission } from '../dto/dashboard-dtos';
 import useSWRMutation from 'swr/mutation';
 import { getAuthorizationHeader } from './header';
 
@@ -70,6 +71,36 @@ export async function callUpdatePermission(
     if (error instanceof AxiosError) {
       if (error.response?.status === 404) {
         alert('Permission not found');
+      }
+      if (error.response?.status === 201) {
+        return error.response.data;
+      }
+    }
+    throw error;
+  }
+}
+
+export async function callCreatePermission(
+  permission: CreatePermissionDto,
+  token: string
+): Promise<Permission> {
+  try {
+    const headers = getAuthorizationHeader(token);
+    const response = await axios.post(
+      `${CREATE_PERMISSION_ROUTE}`,
+      {
+        name: permission.name,
+        description: permission.description,
+      },
+      { headers }
+    );
+    console.log('Create permission Res:  ', response.data);
+    const res: Permission = response.data;
+    return res;
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      if (error.response?.status === 404) {
+        alert('Create permission fail');
       }
       if (error.response?.status === 201) {
         return error.response.data;

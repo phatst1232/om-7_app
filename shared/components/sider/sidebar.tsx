@@ -6,13 +6,14 @@ import {
   RollbackOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
-import { Menu, theme } from 'antd';
-import { useRouter } from 'next/navigation';
+import { Menu } from 'antd';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   DASHBOARD_PATH,
   DASHBOARD_USER_PATH,
   DASHBOARD_ROLE_PATH,
   DASHBOARD_PERMISSION_PATH,
+  PROFILE_PATH,
 } from '@/shared/common/app-route';
 import { signOut } from 'next-auth/react';
 type MenuItem = Required<MenuProps>['items'][number];
@@ -39,63 +40,54 @@ const items: MenuProps['items'] = [
       'User Management',
       'g1',
       null,
-      [
-        getItem('User Table', '1'),
-        // getItem('Update', '2'),
-        // getItem('Activate Job', '3'),
-      ],
+      [getItem('User Table', DASHBOARD_USER_PATH)],
       'group'
     ),
     getItem(
       'Permission Grant',
       'g2',
       null,
-      [getItem('User Role', '4'), getItem('User Permission', '5')],
+      [
+        getItem('User Role', DASHBOARD_ROLE_PATH),
+        getItem('User Permission', DASHBOARD_PERMISSION_PATH),
+      ],
       'group'
     ),
   ]),
 
   getItem('Admin', 'sub2', <UserOutlined />, [
-    getItem('Profile', '6'),
-    getItem('Test Space', '8'),
-    getItem('Log out', '7', <RollbackOutlined />),
+    getItem('Profile', PROFILE_PATH),
+    getItem('Test Space', DASHBOARD_PATH),
+    getItem('Log out', 'sign-out', <RollbackOutlined />),
   ]),
 ];
 
 const SideBarMenu: React.FC = () => {
   const router = useRouter();
+  const currentPath = usePathname();
 
-  const onClick: MenuProps['onClick'] = (e) => {
-    console.log('click ', e);
-    switch (e.key) {
-      case '1':
-        router.push(DASHBOARD_USER_PATH);
-        break;
-      case '4':
-        router.push(DASHBOARD_ROLE_PATH);
-        break;
-      case '5':
-        router.push(DASHBOARD_PERMISSION_PATH);
-        break;
-      case '7':
+  const onClick: MenuProps['onClick'] = (item) => {
+    console.log('click ', item);
+    if (item.key) {
+      if (item.key === 'sign-out') {
         signOut();
-        break;
-      case '8':
-        router.push(DASHBOARD_PATH);
-        break;
-      default:
-        router.push(DASHBOARD_PATH);
+        return;
+      }
+      router.push(item.key);
+      return;
     }
+    router.push(DASHBOARD_USER_PATH);
   };
-  const {
-    token: { colorBgContainer },
-  } = theme.useToken();
+
+  // const {
+  //   token: { colorBgContainer },
+  // } = theme.useToken();
   return (
     <Menu
       onClick={onClick}
       theme='dark'
       style={{ animation: 'backwards', backgroundColor: '#202540' }}
-      defaultSelectedKeys={['8']}
+      defaultSelectedKeys={[currentPath]}
       defaultOpenKeys={['sub1', 'sub2']}
       mode='inline'
       items={items}

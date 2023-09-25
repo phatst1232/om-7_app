@@ -61,18 +61,17 @@ export default function DashboardLayout({
       >
         <Header
           style={{
-            // background: '#f5f5f5',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
           }}
         >
-          <ClvLogo style={{ height: '60%', width: 'auto', margin: '1rem' }} />
+          <ClvLogo style={{ height: '60%', width: 'auto' }} />
           <Avatar
             shape='circle'
             size='large'
             icon={<UserOutlined />}
-            style={{ backgroundColor: '#97a3db', marginRight: '2.5rem' }}
+            style={{ backgroundColor: '#97a3db' }}
           ></Avatar>
         </Header>
         <Content style={{ color: 'black', margin: '0 16px' }}>

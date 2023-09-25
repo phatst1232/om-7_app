@@ -4,8 +4,10 @@ import {
   callUpdateRole,
   callDeleteRole,
   useSearchRoleList,
+  callCreateRole,
+  getAllPermissions,
 } from '@/lib/action/role-action';
-import { Role } from '@/lib/dto/dashboard-dtos';
+import { Permission, Role } from '@/lib/dto/dashboard-dtos';
 import {
   Input,
   Table,
@@ -16,12 +18,40 @@ import {
   Space,
   Tag,
   InputNumber,
+  Modal,
+  Dropdown,
+  MenuProps,
+  message,
 } from 'antd'; // Import Switch from Ant Design
+import {
+  SortableContext,
+  arrayMove,
+  horizontalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import {
+  DndContext,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core/dist/types/index';
 import { TableProps } from 'antd/es/table';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Suspense, useEffect, useState } from 'react';
-import { PlusCircleOutlined } from '@ant-design/icons';
+import { FC, Suspense, useEffect, useState } from 'react';
+import { DownOutlined, PlusCircleOutlined } from '@ant-design/icons';
+import TextArea from 'antd/es/input/TextArea';
+
+type permissionTag = {
+  index: number;
+  label: string;
+  id: string;
+  permissionName: string;
+  description?: string;
+};
+
 function RoleManagementTable() {
   const { data: session, status } = useSession();
   if (
@@ -50,12 +80,6 @@ function RoleManagementTable() {
   const rightFixed: FixedType = 'right';
 
   const roleColsConfig = [
-    // {
-    //   title: "Id",
-    //   dataIndex: "id",
-    //   key: "id",
-    //   render: (text: any, record: RoleData) => <p>{record.id?.slice(-12)}</p>,
-    // },
     {
       title: 'Role name',
       dataIndex: 'name',
@@ -78,13 +102,15 @@ function RoleManagementTable() {
       render: (text: any, record: Role) => (
         <span>
           {record.permissions?.map((permission) => {
-            let color = permission !== 'Role' ? 'geekblue' : 'green';
-            if (permission === 'Admin') {
+            let color = permission.name !== 'User' ? 'geekblue' : 'green';
+            if (permission.name === 'Admin') {
               color = 'volcano';
             }
             return (
-              <Tag color={color} key={permission}>
-                {permission.toUpperCase()}
+              <Tag color={color} key={permission.name}>
+                {typeof permission.name === 'string'
+                  ? permission.name.toUpperCase()
+                  : permission.name}
               </Tag>
             );
           })}
@@ -170,13 +196,15 @@ function RoleManagementTable() {
     expandedRowRender: (record: Role) => (
       <span>
         {record.permissions?.map((permission) => {
-          let color = permission !== 'Role' ? 'geekblue' : 'green';
-          if (permission === 'Admin') {
+          let color = permission.name !== 'User' ? 'geekblue' : 'green';
+          if (permission.name === 'Admin') {
             color = 'volcano';
           }
           return (
-            <Tag color={color} key={permission}>
-              {permission.toUpperCase()}
+            <Tag color={color} key={permission.name}>
+              {typeof permission.name === 'string'
+                ? permission.name.toUpperCase()
+                : permission.name}
             </Tag>
           );
         })}
@@ -248,6 +276,7 @@ function RoleManagementTable() {
           type='primary'
           icon={<PlusCircleOutlined />}
           style={{ marginRight: 30 }}
+          onClick={() => showModal()}
         >
           New Role
         </Button>
@@ -324,23 +353,107 @@ function RoleManagementTable() {
     if (id) {
       const result = await callDeleteRole(id, token);
       console.log('result', result);
-      if (result) {
-        triggerSearchRole();
-      } else {
+      if (!result) {
         alert('Delete role fail');
       }
+      triggerSearchRole();
     }
   }
 
   useEffect(() => {
     triggerSearchRole();
+    getPmsItems();
   }, []);
+  const [createForm] = Form.useForm();
+  const [loading, setLoading] = useState();
+
+  const onFinish = (values: any) => {
+    console.log('Success:', values);
+  };
+
+  const onFinishFailed = (errorInfo: any) => {
+    console.log('Failed:', errorInfo);
+  };
+
+  type PermissionFields = {
+    roleName?: string;
+    description?: string;
+    permissions: Permission[];
+  };
+  const [open, setOpen] = useState(false);
+  const showModal = () => {
+    setOpen(true);
+  };
+
+  const callCreate = async (values: any) => {
+    const newRole = await callCreateRole(
+      {
+        name: values.roleName,
+        description: values.description,
+        permissions: pickedPms,
+      },
+      token
+    );
+    if (newRole) {
+      setOpen(false);
+      setPickedPms([]);
+      createForm.resetFields();
+      triggerSearchRole();
+    }
+  };
+  // const handleClickCreate = () => {
+  //   setLoading(true);
+  //   setTimeout(() => {
+  //     setLoading(false);
+  //     setOpen(false);
+  //   }, 3000);
+  // };
+  const handleCancel = () => {
+    setOpen(false);
+    createForm.resetFields();
+    setPickedPms([]);
+  };
+
+  // add permission
+  const [items, setItems] = useState<MenuProps['items']>([]);
+  const [listPermission, setListPermission] = useState<Permission[]>([]);
+  async function getPmsItems() {
+    try {
+      const listPers = await getAllPermissions(token);
+      setListPermission(listPers);
+      const menu: MenuProps['items'] = [];
+      const obj = listPers.forEach((per, index) =>
+        menu.push({
+          key: per.id,
+          label: per.name,
+        })
+      );
+      setItems(menu);
+    } catch (err) {
+      console.error('Error fetching permissions:', err);
+    }
+  }
+  const onClick: MenuProps['onClick'] = ({ key: id }) => {
+    // message.info(`Click on item ${id}`);
+    const newPicked = listPermission.find((per) => per.id === id);
+    if (newPicked && !pickedPms.includes(newPicked)) {
+      setPickedPms([...pickedPms, newPicked]);
+    }
+  };
+
+  const [pickedPms, setPickedPms] = useState<Permission[]>([]);
+
+  const handleClose = (perId: string) => {
+    const newTags = pickedPms.filter((per) => per.id !== perId);
+    console.log(newTags);
+    setPickedPms(newTags);
+  };
 
   return (
     <div>
       <Space wrap style={{ marginBottom: '2rem', marginTop: '1rem' }}>
         <Input
-          placeholder='rolename'
+          placeholder='Role name'
           value={searchData}
           onChange={(e) => setSearchData(e.target.value)}
         />
@@ -359,7 +472,7 @@ function RoleManagementTable() {
               },
             }}
             scroll={{ x: '100%', y: 500 }}
-            // tableLayout='auto'
+            loading={loadingRole}
             columns={editableColumns} // cause by type of 'fixed' prop of 'collums' type config
             dataSource={roles}
             // rowClassName='editable-row'
@@ -378,6 +491,99 @@ function RoleManagementTable() {
           />
         </Form>
       </Suspense>
+      <Modal
+        open={open}
+        title={<h2 style={{ textAlign: 'center' }}>New Role</h2>}
+        // onOk={handleClickCreate}
+        onCancel={handleCancel}
+        footer={[]}
+      >
+        <Form
+          name='basic'
+          form={createForm}
+          labelCol={{ span: 8 }}
+          wrapperCol={{ span: 16 }}
+          style={{ maxWidth: 600, marginTop: '2rem' }}
+          initialValues={{ remember: true }}
+          onFinish={callCreate}
+          onFinishFailed={onFinishFailed}
+          autoComplete='off'
+        >
+          <Form.Item<PermissionFields>
+            label='Role Name'
+            name='roleName'
+            rules={[
+              { required: true, message: 'Please input name of permission!' },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item<PermissionFields>
+            label='Add permissions'
+            name='permissions'
+          >
+            <Space style={{ flexWrap: 'wrap' }}>
+              {pickedPms.map((per) => (
+                <Tag
+                  closable
+                  onClose={(e) => {
+                    e.preventDefault();
+                    handleClose(per.id);
+                  }}
+                >
+                  {per.name}
+                </Tag>
+              ))}
+            </Space>
+            <Dropdown
+              // disabled
+              overlayStyle={{
+                maxHeight: '200px',
+                overflowY: 'auto',
+                borderRadius: '0.5rem',
+                color: 'black',
+              }}
+              menu={{ items, onClick }}
+              trigger={['click']}
+            >
+              <Button type='dashed'>
+                <Space>
+                  Add permission
+                  {/* <DownOutlined /> */}
+                </Space>
+              </Button>
+            </Dropdown>
+          </Form.Item>
+
+          <Form.Item<PermissionFields>
+            label='Description'
+            name='description'
+            // rules={[{ required: true, message: 'Please input your password!' }]}
+          >
+            <TextArea rows={4} />
+          </Form.Item>
+
+          <Form.Item style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Space style={{ display: 'flex', justifyContent: 'center' }}>
+              <Button key='back' onClick={handleCancel}>
+                Cancel
+              </Button>
+              <Button
+                key='submit'
+                type='primary'
+                loading={loading}
+                // onClick={handleCreate}
+                htmlType='submit'
+              >
+                Create
+              </Button>
+            </Space>
+          </Form.Item>
+          <Form.Item>
+            <Space>{}</Space>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 }

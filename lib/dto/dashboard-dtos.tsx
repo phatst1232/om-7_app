@@ -16,13 +16,24 @@ export type Role = {
   id: string;
   name?: string;
   description?: string;
-  permissions?: string[];
+  permissions?: Permission[];
   status: string;
 };
 
 export type Permission = {
   id: string;
-  name?: string;
+  name: string;
   description?: string;
   status: string;
+};
+
+export type CreatePermissionDto = {
+  name: string;
+  description?: string;
+};
+
+export type CreateRoleDto = {
+  name: string;
+  description?: string;
+  permissions?: Permission[];
 };

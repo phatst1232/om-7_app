@@ -1,10 +1,12 @@
 import axios, { AxiosError } from 'axios';
 import {
+  CREATE_ROLE_ROUTE,
   DELETE_ROLE_ROUTE,
+  GET_ALL_PERMISSION_ROUTE,
   GET_ALL_ROLE_ROUTE,
   UPDATE_ROLE_ROUTE,
 } from '@/shared/common/api-route';
-import { Role } from '../dto/dashboard-dtos';
+import { CreateRoleDto, Permission, Role } from '../dto/dashboard-dtos';
 import useSWRMutation from 'swr/mutation';
 import { getAuthorizationHeader } from './header';
 
@@ -28,6 +30,31 @@ export function useSearchRoleList(searchData: string, token: string) {
     searchRoleError: error,
     triggerSearchRole: trigger,
   };
+}
+
+export async function callCreateRole(
+  role: CreateRoleDto,
+  token: string
+): Promise<Role> {
+  try {
+    const headers = getAuthorizationHeader(token);
+    const response = await axios.post(`${CREATE_ROLE_ROUTE}`, role, {
+      headers,
+    });
+    console.log('Create role Res:  ', response.data);
+    const res: Role = response.data;
+    return res;
+  } catch (error) {
+    if (error instanceof AxiosError) {
+      if (error.response?.status === 404) {
+        alert('Create role fail');
+      }
+      if (error.response?.status === 201) {
+        return error.response.data;
+      }
+    }
+    throw error;
+  }
 }
 
 export async function callDeleteRole(
@@ -56,7 +83,7 @@ export async function callUpdateRole(role: Role, token: string): Promise<Role> {
       {
         name: role.name,
         description: role.description,
-        permissions: role.permissions,
+        roles: role.permissions,
         status: role.status,
       },
       { headers }
@@ -74,5 +101,19 @@ export async function callUpdateRole(role: Role, token: string): Promise<Role> {
       }
     }
     throw error;
+  }
+}
+
+export async function getAllPermissions(token: string): Promise<Permission[]> {
+  try {
+    const headers = getAuthorizationHeader(token);
+    const response = await axios.get(`${GET_ALL_PERMISSION_ROUTE}`, {
+      headers,
+    });
+    console.log('response', response);
+    return response.data;
+  } catch (error) {
+    console.log('getAllPermissions - Catched ERROR: ' + error);
+    return [];
   }
 }
