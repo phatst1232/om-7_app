@@ -3,10 +3,11 @@ import {
   callUpdateUser,
   callDeleteUser,
   useSearchUserList,
+  getAllRoles,
+  useCreateUser,
 } from '@/lib/action/user-action';
-import { User } from '@/lib/dto/dashboard-dtos';
-import { GET_ALL_USER_ROUTE } from '@/shared/common/api-route';
-import { LOGIN_PATH } from '@/shared/common/app-route';
+import { CreateUserDto, Role, User } from '@/lib/dto/dashboard-dtos';
+import { LoadingOutlined, PlusOutlined } from '@ant-design/icons';
 import {
   Input,
   Table,
@@ -18,14 +19,43 @@ import {
   Tag,
   InputNumber,
   Select,
-  SelectProps,
   Spin,
+  Dropdown,
+  Modal,
+  MenuProps,
+  message,
+  Radio,
+  DatePicker,
 } from 'antd'; // Import Switch from Ant Design
-import { ColumnsType, TableProps } from 'antd/es/table';
+import { NoticeType } from 'antd/es/message/interface';
+import { TableProps } from 'antd/es/table';
+import Upload, {
+  RcFile,
+  UploadChangeParam,
+  UploadFile,
+  UploadProps,
+} from 'antd/es/upload';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
-import useSWR from 'swr';
+
+const getBase64 = (img: RcFile, callback: (url: string) => void) => {
+  const reader = new FileReader();
+  reader.addEventListener('load', () => callback(reader.result as string));
+  reader.readAsDataURL(img);
+};
+
+const beforeUpload = (file: RcFile) => {
+  const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
+  if (!isJpgOrPng) {
+    message.error('You can only upload JPG/PNG file!');
+  }
+  const isLt2M = file.size / 1024 / 1024 < 2;
+  if (!isLt2M) {
+    message.error('Image must smaller than 2MB!');
+  }
+  return isJpgOrPng && isLt2M;
+};
 
 function UserManagementTable() {
   const { data: session, status } = useSession();
@@ -38,13 +68,22 @@ function UserManagementTable() {
   }
   const token = session?.user.accessToken || '';
   const [searchData, setSearchData] = useState('');
+  const [userToCreate, setUserToCreate] = useState<CreateUserDto>(
+    {} as CreateUserDto
+  );
   const router = useRouter();
+  //swr api create
   const {
     users,
     isMutating: loadingUser,
     searchUserError,
     triggerSearchUser,
   } = useSearchUserList(searchData, token);
+
+  const { createResult, creatingUser, createError, doCreateUser } =
+    useCreateUser(userToCreate, token);
+  // await callCreateUser();
+
   console.log('Users: ', users);
   const handleChange = (value: string[]) => {
     form.setFieldValue('gender', value);
@@ -55,12 +94,6 @@ function UserManagementTable() {
   const rightFixed: FixedType = 'right';
 
   const userColsConfig = [
-    // {
-    //   title: "Id",
-    //   dataIndex: "id",
-    //   key: "id",
-    //   render: (text: any, record: UserData) => <p>{record.id?.slice(-12)}</p>,
-    // },
     {
       title: 'Username',
       dataIndex: 'username',
@@ -124,13 +157,13 @@ function UserManagementTable() {
       render: (text: any, record: User) => (
         <span>
           {record.roles?.map((role) => {
-            let color = role !== 'User' ? 'geekblue' : 'green';
-            if (role === 'Admin') {
+            let color = role.name !== 'User' ? 'geekblue' : 'green';
+            if (role.name === 'Admin') {
               color = 'volcano';
             }
             return (
-              <Tag color={color} key={role}>
-                {role.toUpperCase()}
+              <Tag color={color} key={role.id}>
+                {role.name?.toUpperCase()}
               </Tag>
             );
           })}
@@ -247,13 +280,14 @@ function UserManagementTable() {
     expandedRowRender: (record: User) => (
       <span>
         {record.roles?.map((role) => {
-          let color = role !== 'User' ? 'geekblue' : 'green';
-          if (role === 'Admin') {
+          let color =
+            role.name?.toLowerCase() !== 'user' ? 'geekblue' : 'green';
+          if (role.name?.toLowerCase() === 'admin') {
             color = 'volcano';
           }
           return (
-            <Tag color={color} key={role}>
-              {role.toUpperCase()}
+            <Tag color={color} key={role.id}>
+              {role.name?.toUpperCase()}
             </Tag>
           );
         })}
@@ -311,7 +345,26 @@ function UserManagementTable() {
     loading: false,
     size: 'small',
     expandable: defaultExpandable,
-    title: () => <h1>User Management</h1>,
+    title: () => (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <h1>User Management</h1>
+        <Button
+          type='primary'
+          icon={<PlusOutlined />}
+          style={{ marginRight: 30 }}
+          onClick={() => showModal()}
+        >
+          New User
+        </Button>
+      </div>
+    ),
     showHeader: true,
     rowSelection: {},
     sticky: true,
@@ -328,7 +381,7 @@ function UserManagementTable() {
       // fullName: '',  // default
       // email: '',
       // gender: '',
-      // image: '',
+      image: '',
       ...record, // but ...record here overwrite the default values
     });
     setEditingKey(record.id);
@@ -400,10 +453,138 @@ function UserManagementTable() {
 
   useEffect(() => {
     triggerSearchUser();
+    getRoleItems();
   }, []);
+
+  const [createForm] = Form.useForm();
+  const [loading, setLoading] = useState();
+
+  const onFinish = (values: any) => {
+    console.log('Success:', values);
+  };
+
+  const onFinishFailed = (errorInfo: any) => {
+    console.log('Failed:', errorInfo);
+  };
+
+  const [open, setOpen] = useState(false);
+  const showModal = () => {
+    setOpen(true);
+  };
+  const [messageApi, msgContextHolder] = message.useMessage();
+  const openMessage = (type: NoticeType, content?: string) => {
+    messageApi.open({
+      type: type,
+      content: content ? content : '',
+    });
+  };
+  const callCreate = async (user: User) => {
+    if (user.username) {
+      user.roles = pickedRoles;
+      setUserToCreate(user);
+    }
+  };
+  useEffect(() => {
+    if (userToCreate.username) doCreateUser();
+  }, [userToCreate]);
+  // handle New User result
+  useEffect(() => {
+    if (!userToCreate.username) {
+      return;
+    }
+    if (!createError && createResult?.data) {
+      openMessage(
+        'info',
+        createResult?.data.username
+          ? `New user created! username: ${createResult?.data.username}`
+          : 'New user created!'
+      );
+      setOpen(false);
+      createForm.resetFields();
+      setPickedRoles([]);
+      return;
+    }
+    if (createError?.response.data.message) {
+      openMessage(
+        'error',
+        `Create user error: ${createError.response.data.message}`
+      );
+      // message.error(createError.response.data.message);
+    } else {
+      openMessage('error', `Error: Unknown`);
+    }
+  }, [createError, createResult]);
+  const handleCancel = () => {
+    setOpen(false);
+    createForm.resetFields();
+    setPickedRoles([]);
+  };
+
+  // add permission
+  const [items, setItems] = useState<MenuProps['items']>([]);
+  const [listRole, setListRole] = useState<Role[]>([]);
+
+  async function getRoleItems() {
+    try {
+      const listRoles = await getAllRoles(token);
+      setListRole(listRoles);
+      const menu: MenuProps['items'] = [];
+      const obj = listRoles.forEach((role, index) =>
+        menu.push({
+          key: role.id,
+          label: role.name,
+        })
+      );
+      setItems(menu);
+    } catch (err) {
+      console.error('Error fetching Roles:', err);
+    }
+  }
+
+  const onClick: MenuProps['onClick'] = ({ key: id }) => {
+    const newPicked = listRole.find((role) => role.id === id);
+    if (newPicked && !pickedRoles.includes(newPicked)) {
+      setPickedRoles([...pickedRoles, newPicked]);
+    }
+  };
+
+  const [pickedRoles, setPickedRoles] = useState<Role[]>([]);
+
+  const handleClose = (perId: string) => {
+    const newTags = pickedRoles.filter((role) => role.id !== perId);
+    console.log(newTags);
+    setPickedRoles(newTags);
+  };
+
+  // upload avt
+  const [avtLoading, setAvtLoading] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string>();
+  const handleAvtChange: UploadProps['onChange'] = (
+    info: UploadChangeParam<UploadFile>
+  ) => {
+    if (info.file.status === 'uploading') {
+      setAvtLoading(true);
+      return;
+    }
+    if (info.file.status === 'done') {
+      // Get this url from response in real world.
+      getBase64(info.file.originFileObj as RcFile, (url) => {
+        setAvtLoading(false);
+        setImageUrl(url);
+      });
+    }
+  };
+
+  const uploadButton = (
+    <div>
+      {loading ? <LoadingOutlined /> : <PlusOutlined />}
+      <div style={{ marginTop: 8 }}>Upload</div>
+    </div>
+  );
 
   return (
     <div>
+      {msgContextHolder}
       <Space wrap style={{ marginBottom: '2rem', marginTop: '1rem' }}>
         <Input
           placeholder='username'
@@ -444,6 +625,198 @@ function UserManagementTable() {
           />
         </Form>
       </Suspense>
+      <Modal
+        open={open}
+        width={700}
+        style={{ justifyContent: 'center' }}
+        title={<h2 style={{ textAlign: 'center' }}>New User</h2>}
+        onCancel={handleCancel}
+        footer={[]}
+      >
+        <Form
+          name='basic'
+          form={createForm}
+          labelCol={{ span: 8 }}
+          wrapperCol={{ span: 12 }}
+          style={{
+            maxWidth: 580,
+            marginLeft: '2rem',
+            marginRight: '2rem',
+            marginTop: '2rem',
+            width: '100%',
+          }}
+          initialValues={{ remember: true }}
+          onFinish={callCreate}
+          onFinishFailed={onFinishFailed}
+          autoComplete='off'
+        >
+          <Form.Item<User>
+            // label='Avatar'
+            name='image'
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              marginLeft: 16,
+            }}
+          >
+            {/* <Input value={'Have not Implement, yet'}></Input> */}
+            <Upload
+              name='avatar'
+              listType='picture-circle'
+              className='avatar-uploader'
+              showUploadList={false}
+              action='https://run.mocky.io/v3/435e224c-44fb-4773-9faf-380c5e6a2188'
+              beforeUpload={beforeUpload}
+              onChange={handleAvtChange}
+            >
+              {imageUrl ? (
+                <img src={imageUrl} alt='avatar' style={{ width: '100%' }} />
+              ) : (
+                uploadButton
+              )}
+            </Upload>
+          </Form.Item>
+          <Form.Item<User>
+            label='User Name'
+            name='username'
+            rules={[
+              { required: true, message: 'Please input username!' },
+              {
+                pattern: /^[a-zA-Z0-9_]+$/,
+                message:
+                  'Username can contain only letters, digits, and underscores!',
+              },
+              {
+                pattern: /^.{3,20}$/,
+                message:
+                  'Username must be between 3 and 20 characters in length!',
+              },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item<User>
+            label='Full Name'
+            name='fullName'
+            rules={[{ required: true, message: 'Please input Full Name!' }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item<User>
+            label='Gender'
+            name='gender'
+            rules={[{ required: true, message: 'Please choose a Gender!' }]}
+          >
+            <Radio.Group style={{ marginLeft: '1rem' }}>
+              <Radio value={true}> Male </Radio>
+              <Radio value={false}> Female </Radio>
+            </Radio.Group>
+          </Form.Item>
+          <Form.Item<User> label='Date of Birth' name='dateOfBirth'>
+            <DatePicker showToday={false} />
+          </Form.Item>
+          <Form.Item<User>
+            label='Email'
+            name='email'
+            rules={[
+              { required: true, message: 'Please input email!' },
+              {
+                pattern: /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
+                message: 'Invalid email!',
+              },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item<User>
+            label='Phone'
+            name='phone'
+            rules={[
+              {
+                pattern: /^(03|05|07|08|09)\d{8}$/,
+                message: 'Invalid phone number!',
+              },
+            ]}
+          >
+            <Input />
+          </Form.Item>
+
+          <Form.Item<User> label='Roles' name='roles'>
+            <Space
+              style={{
+                flexWrap: 'wrap',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+              }}
+            >
+              <span>
+                {pickedRoles.map((per) => (
+                  <Tag
+                    closable
+                    onClose={(e) => {
+                      e.preventDefault();
+                      handleClose(per.id);
+                    }}
+                  >
+                    {per.name}
+                  </Tag>
+                ))}
+              </span>
+              <Dropdown
+                // disabled
+                overlayStyle={{
+                  maxHeight: '200px',
+                  overflowY: 'auto',
+                  borderRadius: '0.5rem',
+                  color: 'black',
+                }}
+                menu={{ items, onClick }}
+                trigger={['click']}
+              >
+                <Button type='dashed'>
+                  <Space>
+                    Add role
+                    {/* <DownOutlined /> */}
+                  </Space>
+                </Button>
+              </Dropdown>
+            </Space>
+          </Form.Item>
+          <Form.Item style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Space
+              style={{
+                display: 'flex',
+                width: '100%',
+                justifyContent: 'space-between',
+              }}
+            >
+              <Button
+                key='submit'
+                type='link'
+                style={{ marginRight: '13rem' }}
+                onClick={() => createForm.resetFields()}
+              >
+                Reset form
+              </Button>
+              <Button key='back' onClick={handleCancel}>
+                Cancel
+              </Button>
+              <Button
+                key='submit'
+                type='primary'
+                loading={loading}
+                htmlType='submit'
+              >
+                Create
+              </Button>
+            </Space>
+          </Form.Item>
+          <Form.Item<User> name='password'>
+            <input hidden value='default' />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 }

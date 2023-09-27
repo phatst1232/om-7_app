@@ -4,10 +4,10 @@ import {
   callUpdateRole,
   callDeleteRole,
   useSearchRoleList,
-  callCreateRole,
   getAllPermissions,
+  useCreateRole,
 } from '@/lib/action/role-action';
-import { Permission, Role } from '@/lib/dto/dashboard-dtos';
+import { CreateRoleDto, Permission, Role } from '@/lib/dto/dashboard-dtos';
 import {
   Input,
   Table,
@@ -23,26 +23,13 @@ import {
   MenuProps,
   message,
 } from 'antd'; // Import Switch from Ant Design
-import {
-  SortableContext,
-  arrayMove,
-  horizontalListSortingStrategy,
-  useSortable,
-} from '@dnd-kit/sortable';
-import {
-  DndContext,
-  PointerSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import type { DragEndEvent } from '@dnd-kit/core/dist/types/index';
 import { TableProps } from 'antd/es/table';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { FC, Suspense, useEffect, useState } from 'react';
-import { DownOutlined, PlusCircleOutlined } from '@ant-design/icons';
+import { Suspense, useEffect, useState } from 'react';
+import { PlusOutlined } from '@ant-design/icons';
 import TextArea from 'antd/es/input/TextArea';
+import { NoticeType } from 'antd/es/message/interface';
 
 type permissionTag = {
   index: number;
@@ -274,7 +261,7 @@ function RoleManagementTable() {
         <h1>Role Management</h1>
         <Button
           type='primary'
-          icon={<PlusCircleOutlined />}
+          icon={<PlusOutlined />}
           style={{ marginRight: 30 }}
           onClick={() => showModal()}
         >
@@ -384,30 +371,59 @@ function RoleManagementTable() {
   const showModal = () => {
     setOpen(true);
   };
+  const [roleToCreate, setRoleToCreate] = useState<CreateRoleDto>(
+    {} as CreateRoleDto
+  );
 
-  const callCreate = async (values: any) => {
-    const newRole = await callCreateRole(
-      {
-        name: values.roleName,
-        description: values.description,
-        permissions: pickedPms,
-      },
-      token
-    );
-    if (newRole) {
-      setOpen(false);
-      setPickedPms([]);
-      createForm.resetFields();
-      triggerSearchRole();
+  const { createResult, createError, creatingRole, doCreateRole } =
+    useCreateRole(roleToCreate, token);
+
+  const [messageApi, msgContextHolder] = message.useMessage();
+  const openMessage = (type: NoticeType, content?: string) => {
+    messageApi.open({
+      type: type,
+      content: content ? content : '',
+    });
+  };
+
+  const callCreate = async (role: CreateRoleDto) => {
+    if (role.name) {
+      role.permissions = pickedPms;
+      setRoleToCreate(role);
     }
   };
-  // const handleClickCreate = () => {
-  //   setLoading(true);
-  //   setTimeout(() => {
-  //     setLoading(false);
-  //     setOpen(false);
-  //   }, 3000);
-  // };
+
+  useEffect(() => {
+    if (roleToCreate.name) doCreateRole();
+  }, [roleToCreate]);
+  // handle New User result
+  useEffect(() => {
+    if (!roleToCreate.name) {
+      return;
+    }
+    if (!createError && createResult?.data) {
+      openMessage(
+        'info',
+        createResult?.data.name
+          ? `New role created! name: ${createResult?.data.name}`
+          : 'New user created!'
+      );
+      setOpen(false);
+      createForm.resetFields();
+      setPickedPms([]);
+      return;
+    }
+    if (createError?.response.data.message) {
+      openMessage(
+        'error',
+        `Create user error: ${createError.response.data.message}`
+      );
+      // message.error(createError.response.data.message);
+    } else {
+      openMessage('error', `Error: Unknown`);
+    }
+  }, [createError, createResult]);
+
   const handleCancel = () => {
     setOpen(false);
     createForm.resetFields();
@@ -518,10 +534,7 @@ function RoleManagementTable() {
           >
             <Input />
           </Form.Item>
-          <Form.Item<PermissionFields>
-            label='Add permissions'
-            name='permissions'
-          >
+          <Form.Item<PermissionFields> label='Permissions' name='permissions'>
             <Space style={{ flexWrap: 'wrap' }}>
               {pickedPms.map((per) => (
                 <Tag

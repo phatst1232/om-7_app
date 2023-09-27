@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Avatar, Layout, Menu, MenuProps, Spin, theme } from 'antd';
+import { Avatar, Layout, theme } from 'antd';
 import SideBarMenu from '@/shared/components/sider/sidebar';
 import { redirect } from 'next/navigation';
 import { useSession } from 'next-auth/react';

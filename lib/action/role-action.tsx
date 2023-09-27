@@ -32,6 +32,30 @@ export function useSearchRoleList(searchData: string, token: string) {
   };
 }
 
+export const createRoleFetcher = (
+  url: string,
+  role: CreateRoleDto,
+  token: string
+) => {
+  const headers = getAuthorizationHeader(token);
+  return axios.post(url, role, {
+    headers,
+  });
+};
+
+export function useCreateRole(role: CreateRoleDto, token: string) {
+  const { data, error, isMutating, trigger } = useSWRMutation(
+    CREATE_ROLE_ROUTE,
+    (url) => createRoleFetcher(url, role, token)
+  );
+  return {
+    createResult: data,
+    creatingRole: isMutating,
+    createError: error,
+    doCreateRole: trigger,
+  };
+}
+
 export async function callCreateRole(
   role: CreateRoleDto,
   token: string
