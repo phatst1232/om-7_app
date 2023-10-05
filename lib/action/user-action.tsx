@@ -4,6 +4,7 @@ import {
   DELETE_USER_ROUTE,
   GET_ALL_ROLE_ROUTE,
   GET_ALL_USER_ROUTE,
+  REGISTER_USER_ROUTE,
   UPDATE_USER_ROUTE,
 } from '@/shared/common/api-route';
 import { CreateUserDto, Role, User } from '../dto/dashboard-dtos';
@@ -30,6 +31,23 @@ export function useSearchUserList(searchData: string, token: string) {
     isMutating: isMutating,
     searchUserError: error,
     triggerSearchUser: trigger,
+  };
+}
+
+export const registerNewUser = (url: string, user: CreateUserDto) => {
+  return axios.post(url, user);
+};
+
+export function useRegisterNewUser(user: CreateUserDto) {
+  const { data, error, isMutating, trigger } = useSWRMutation(
+    REGISTER_USER_ROUTE,
+    (url) => registerNewUser(url, user)
+  );
+  return {
+    registerResult: data,
+    registeringUser: isMutating,
+    registerError: error,
+    doRegisterNewUser: trigger,
   };
 }
 

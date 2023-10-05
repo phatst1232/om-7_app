@@ -1,11 +1,8 @@
 // 'use client';
 
 import './globals.css';
-import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import StyledComponentsRegistry from '@/lib/AntdRegistry';
-import { getServerSession } from 'next-auth';
-import { SessionProvider } from 'next-auth/react';
 import AuthProvider from '@/shared/components/access/AuthProvider';
 
 const inter = Inter({ subsets: ['latin'] });

@@ -125,7 +125,7 @@ const LoginForm: React.FC = () => {
           Log in Google
         </Button>
         Or{' '}
-        <a style={{ color: 'blue' }} href='/dashboard'>
+        <a style={{ color: 'blue' }} href='/login/register'>
           register now!
         </a>
       </Form.Item>

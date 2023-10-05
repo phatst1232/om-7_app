@@ -28,6 +28,17 @@ export type Permission = {
   status: string;
 };
 
+export type RegisterUserDto = {
+  fullName: string;
+  username: string;
+  email: string;
+  phone?: string;
+  image?: string;
+  gender: boolean;
+  dateOfBirth?: string;
+  roles?: Role[];
+};
+
 export type CreateUserDto = {
   fullName: string;
   username: string;
